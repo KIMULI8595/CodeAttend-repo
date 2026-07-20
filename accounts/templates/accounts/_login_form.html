@@ -1,0 +1,11 @@
+<form method="post" novalidate>
+  {% csrf_token %}
+  {% if form.non_field_errors %}<div class="auth-errors" role="alert">{{ form.non_field_errors }}</div>{% endif %}
+  <div class="form-group"><label for="{{ form.username.id_for_label }}">{{ form.username.label }}</label>{{ form.username }}{{ form.username.errors }}</div>
+  <div class="form-group"><label for="{{ form.password.id_for_label }}">{{ form.password.label }}</label><div class="password-field">{{ form.password }}<button type="button" class="password-toggle" data-password-toggle aria-label="Show password">Show</button></div>{{ form.password.errors }}</div>
+  {% if next %}<input type="hidden" name="next" value="{{ next }}">{% endif %}
+  <button class="button button-primary auth-submit" type="submit">{{ submit_label }}</button>
+</form>
+<script>
+document.addEventListener("DOMContentLoaded",()=>{document.querySelectorAll("[data-password-toggle]").forEach(btn=>btn.addEventListener("click",()=>{const input=btn.closest(".password-field").querySelector("input");const show=input.type==="password";input.type=show?"text":"password";btn.textContent=show?"Hide":"Show";btn.setAttribute("aria-label",show?"Hide password":"Show password");}));});
+</script>

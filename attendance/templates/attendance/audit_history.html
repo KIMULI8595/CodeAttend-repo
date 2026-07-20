@@ -1,0 +1,411 @@
+{% extends "base.html" %}
+
+{% block title %}
+    Attendance Audit History | CodeAttend
+{% endblock %}
+
+{% block extra_css %}
+    <style>
+        .filter-panel {
+            margin-bottom: 24px;
+            padding: 20px;
+        }
+
+        .filters {
+            display: grid;
+            grid-template-columns: minmax(220px, 2fr) minmax(180px, 1fr) auto;
+            gap: 16px;
+            align-items: end;
+        }
+
+        .field label {
+            display: block;
+            margin-bottom: 7px;
+            color: #374151;
+            font-size: 13px;
+            font-weight: 800;
+        }
+
+        .field input,
+        .field select {
+            width: 100%;
+            min-height: 44px;
+            padding: 10px 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            background: white;
+            color: var(--color-text);
+            outline: none;
+        }
+
+        .field input:focus,
+        .field select:focus {
+            border-color: #6b7280;
+            box-shadow: 0 0 0 3px rgba(107, 114, 128, 0.15);
+        }
+
+        .filter-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .audit-action {
+            display: inline-flex;
+            padding: 5px 10px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 800;
+        }
+
+        .audit-created {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .audit-updated {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+
+        .audit-deleted {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .reason-cell {
+            min-width: 240px;
+            max-width: 360px;
+            white-space: normal;
+            line-height: 1.5;
+        }
+
+        .value-change {
+            min-width: 170px;
+            font-size: 13px;
+            line-height: 1.5;
+            white-space: normal;
+        }
+
+        .value-change span {
+            display: block;
+        }
+
+        .pagination {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 24px;
+        }
+
+        .pagination a,
+        .pagination span {
+            display: inline-flex;
+            min-height: 38px;
+            align-items: center;
+            justify-content: center;
+            padding: 8px 13px;
+            border: 1px solid var(--color-border);
+            border-radius: 8px;
+            background: white;
+            color: var(--color-text);
+            font-size: 14px;
+            font-weight: 700;
+            text-decoration: none;
+        }
+
+        .pagination a:hover {
+            background: #f3f4f6;
+        }
+
+        .pagination .current {
+            border-color: var(--color-primary);
+            background: var(--color-primary);
+            color: white;
+        }
+
+        @media (max-width: 760px) {
+            .filters {
+                grid-template-columns: 1fr;
+            }
+
+            .filter-actions {
+                width: 100%;
+            }
+
+            .filter-actions .button {
+                flex: 1;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .filter-actions {
+                flex-direction: column;
+            }
+
+            .filter-actions .button {
+                width: 100%;
+            }
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+    <header class="page-header">
+        <div>
+            <h1>Attendance Audit History</h1>
+
+            <p>
+                Review attendance creation, correction, and deletion activity.
+            </p>
+        </div>
+
+        <nav class="page-actions">
+            <a
+                href="{% url 'attendance-create' %}"
+                class="button button-success"
+            >
+                Record Attendance
+            </a>
+
+            <a
+                href="{% url 'attendance-history' %}"
+                class="button button-secondary"
+            >
+                Attendance History
+            </a>
+        </nav>
+    </header>
+
+    <section class="panel filter-panel">
+        <form method="get" class="filters">
+            <div class="field">
+                <label for="search">
+                    Search Intern
+                </label>
+
+                <input
+                    type="text"
+                    id="search"
+                    name="search"
+                    value="{{ filters.search }}"
+                    placeholder="Search by intern name"
+                >
+            </div>
+
+            <div class="field">
+                <label for="action">
+                    Audit Action
+                </label>
+
+                <select id="action" name="action">
+                    <option value="">
+                        All actions
+                    </option>
+
+                    <option
+                        value="CREATED"
+                        {% if filters.action == "CREATED" %}
+                            selected
+                        {% endif %}
+                    >
+                        Created
+                    </option>
+
+                    <option
+                        value="UPDATED"
+                        {% if filters.action == "UPDATED" %}
+                            selected
+                        {% endif %}
+                    >
+                        Updated
+                    </option>
+
+                    <option
+                        value="DELETED"
+                        {% if filters.action == "DELETED" %}
+                            selected
+                        {% endif %}
+                    >
+                        Deleted
+                    </option>
+                </select>
+            </div>
+
+            <div class="filter-actions">
+                <button type="submit" class="button">
+                    Apply
+                </button>
+
+                <a
+                    href="{% url 'attendance-audit-history' %}"
+                    class="button button-outline"
+                >
+                    Clear
+                </a>
+            </div>
+        </form>
+    </section>
+
+    <section class="panel">
+        <div class="panel-header">
+            <h2>Audit Entries</h2>
+        </div>
+
+        {% if audits %}
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Date and Time</th>
+                            <th>Action</th>
+                            <th>Intern</th>
+                            <th>Attendance Date</th>
+                            <th>Batch</th>
+                            <th>Session</th>
+                            <th>Status Change</th>
+                            <th>Time Change</th>
+                            <th>Reason</th>
+                            <th>Performed By</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        {% for audit in audits %}
+                            <tr>
+                                <td>
+                                    {{ audit.created_at|date:"d M Y H:i:s" }}
+                                </td>
+
+                                <td>
+                                    {% if audit.action == "CREATED" %}
+                                        <span class="audit-action audit-created">
+                                            {{ audit.get_action_display }}
+                                        </span>
+                                    {% elif audit.action == "UPDATED" %}
+                                        <span class="audit-action audit-updated">
+                                            {{ audit.get_action_display }}
+                                        </span>
+                                    {% else %}
+                                        <span class="audit-action audit-deleted">
+                                            {{ audit.get_action_display }}
+                                        </span>
+                                    {% endif %}
+                                </td>
+
+                                <td>
+                                    {{ audit.intern.user.full_name }}
+                                </td>
+
+                                <td>
+                                    {{ audit.attendance_date|date:"d M Y" }}
+                                </td>
+
+                                <td>
+                                    {{ audit.batch.name }}
+                                </td>
+
+                                <td>
+                                    {{ audit.session.name }}
+                                </td>
+
+                                <td class="value-change">
+                                    {% if audit.previous_status %}
+                                        <span>
+                                            From:
+                                            {{ audit.get_previous_status_display }}
+                                        </span>
+                                    {% endif %}
+
+                                    {% if audit.new_status %}
+                                        <span>
+                                            To:
+                                            {{ audit.get_new_status_display }}
+                                        </span>
+                                    {% endif %}
+
+                                    {% if not audit.previous_status and not audit.new_status %}
+                                        —
+                                    {% endif %}
+                                </td>
+
+                                <td class="value-change">
+                                    {% if audit.previous_check_in_time %}
+                                        <span>
+                                            From:
+                                            {{ audit.previous_check_in_time|time:"H:i:s" }}
+                                        </span>
+                                    {% endif %}
+
+                                    {% if audit.new_check_in_time %}
+                                        <span>
+                                            To:
+                                            {{ audit.new_check_in_time|time:"H:i:s" }}
+                                        </span>
+                                    {% endif %}
+
+                                    {% if not audit.previous_check_in_time and not audit.new_check_in_time %}
+                                        —
+                                    {% endif %}
+                                </td>
+
+                                <td class="reason-cell">
+                                    {{ audit.reason|default:"—" }}
+                                </td>
+
+                                <td>
+                                    {% if audit.performed_by %}
+                                        {{ audit.performed_by.full_name }}
+                                    {% else %}
+                                        System
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="empty-state">
+                No attendance audit entries matched your filters.
+            </div>
+        {% endif %}
+    </section>
+
+    {% if page.paginator.num_pages > 1 %}
+        <nav class="pagination" aria-label="Audit pagination">
+            {% if page.has_previous %}
+                <a
+                    href="?page=1&search={{ filters.search|urlencode }}&action={{ filters.action }}"
+                >
+                    First
+                </a>
+
+                <a
+                    href="?page={{ page.previous_page_number }}&search={{ filters.search|urlencode }}&action={{ filters.action }}"
+                >
+                    Previous
+                </a>
+            {% endif %}
+
+            <span class="current">
+                Page {{ page.number }} of {{ page.paginator.num_pages }}
+            </span>
+
+            {% if page.has_next %}
+                <a
+                    href="?page={{ page.next_page_number }}&search={{ filters.search|urlencode }}&action={{ filters.action }}"
+                >
+                    Next
+                </a>
+
+                <a
+                    href="?page={{ page.paginator.num_pages }}&search={{ filters.search|urlencode }}&action={{ filters.action }}"
+                >
+                    Last
+                </a>
+            {% endif %}
+        </nav>
+    {% endif %}
+{% endblock %}

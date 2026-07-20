@@ -1,0 +1,5 @@
+{% extends "base.html" %}
+{% block title %}Reject Intern | CodeAttend{% endblock %}
+{% block content %}
+<div class="form-card"><h1>Reject {{ intern.user.full_name }}</h1><p>Give a clear reason. The decision is recorded in the approval history.</p><form method="post">{% csrf_token %}{{ form.as_p }}<div class="actions"><button class="button button-danger" type="submit">Confirm rejection</button><a class="button button-secondary" href="{% url 'pending-interns' %}">Cancel</a></div></form></div>
+{% endblock %}

@@ -1,0 +1,690 @@
+{% extends "base.html" %}
+
+{% block title %}
+    Attendance Dashboard | CodeAttend
+{% endblock %}
+
+{% block extra_head %}
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+{% endblock %}
+
+{% block extra_css %}
+    <style>
+        .dashboard-cards {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .dashboard-card {
+            position: relative;
+            overflow: hidden;
+            padding: 20px;
+            border: 1px solid rgba(229, 231, 235, 0.9);
+            border-radius: 12px;
+            background: white;
+            box-shadow: var(--shadow-card);
+        }
+
+        .dashboard-card::after {
+            position: absolute;
+            right: -16px;
+            bottom: -22px;
+            width: 88px;
+            height: 88px;
+            border-radius: 999px;
+            background: rgba(17, 24, 39, 0.04);
+            content: "";
+        }
+
+        .dashboard-card h2 {
+            margin: 0 0 12px;
+            color: var(--color-muted);
+            font-size: 13px;
+            font-weight: 800;
+            letter-spacing: 0.03em;
+            text-transform: uppercase;
+        }
+
+        .dashboard-card strong {
+            display: block;
+            font-size: 32px;
+            line-height: 1.1;
+            letter-spacing: -0.04em;
+        }
+
+        .dashboard-card small {
+            display: block;
+            margin-top: 9px;
+            color: var(--color-muted);
+            line-height: 1.4;
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: minmax(0, 2fr) minmax(300px, 1fr);
+            gap: 24px;
+            margin-bottom: 24px;
+        }
+
+        .chart-panel {
+            padding-bottom: 20px;
+        }
+
+        .chart-wrapper {
+            position: relative;
+            min-height: 330px;
+            padding: 20px;
+        }
+
+        .snapshot-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 14px;
+            padding: 18px;
+        }
+
+        .snapshot-item {
+            padding: 16px;
+            border: 1px solid var(--color-border);
+            border-radius: 10px;
+            background: #f9fafb;
+        }
+
+        .snapshot-item span {
+            display: block;
+            margin-bottom: 8px;
+            color: var(--color-muted);
+            font-size: 12px;
+            font-weight: 800;
+            text-transform: uppercase;
+        }
+
+        .snapshot-item strong {
+            font-size: 24px;
+        }
+
+        .progress-track {
+            height: 8px;
+            margin-top: 12px;
+            overflow: hidden;
+            border-radius: 999px;
+            background: #e5e7eb;
+        }
+
+        .progress-value {
+            height: 100%;
+            border-radius: inherit;
+            background: #111827;
+        }
+
+        .method-grid {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 14px;
+            padding: 18px;
+        }
+
+        .method-card {
+            padding: 16px;
+            border: 1px solid var(--color-border);
+            border-radius: 10px;
+            background: #ffffff;
+        }
+
+        .method-card span {
+            display: block;
+            color: var(--color-muted);
+            font-size: 13px;
+            font-weight: 700;
+        }
+
+        .method-card strong {
+            display: block;
+            margin-top: 8px;
+            font-size: 28px;
+        }
+
+        .batch-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            padding: 18px;
+        }
+
+        .batch-item {
+            padding: 14px;
+            border: 1px solid var(--color-border);
+            border-radius: 9px;
+            transition:
+                border-color 0.15s ease,
+                background 0.15s ease;
+        }
+
+        .batch-item:hover {
+            border-color: #9ca3af;
+            background: #f9fafb;
+        }
+
+        .batch-item-heading {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+        }
+
+        .batch-rate {
+            font-weight: 800;
+        }
+
+        .batch-meta {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 6px 12px;
+            margin-top: 10px;
+            color: var(--color-muted);
+            font-size: 12px;
+        }
+
+        .top-batch-list {
+            display: grid;
+            gap: 12px;
+            padding: 18px;
+        }
+
+        .top-batch-item {
+            display: flex;
+            justify-content: space-between;
+            gap: 16px;
+            padding: 14px;
+            border: 1px solid var(--color-border);
+            border-radius: 9px;
+        }
+
+        .table-status-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+
+        .method-label,
+        .checkout-label {
+            display: inline-flex;
+            align-items: center;
+            padding: 4px 8px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        .method-label {
+            color: #374151;
+            background: #f3f4f6;
+        }
+
+        .checkout-label {
+            color: #065f46;
+            background: #d1fae5;
+        }
+
+        .checkout-label.pending {
+            color: #92400e;
+            background: #fef3c7;
+        }
+
+        @media (max-width: 1150px) {
+            .dashboard-cards {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 800px) {
+            .method-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+
+            .snapshot-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 560px) {
+            .dashboard-cards,
+            .method-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+    <header class="page-header">
+        <div>
+            <h1>Attendance Dashboard</h1>
+
+            <p>
+                Management overview for {{ today|date:"l, d F Y" }}
+            </p>
+        </div>
+
+        <nav class="page-actions">
+            <a
+                href="{% url 'attendance-history' %}"
+                class="button button-secondary"
+            >
+                Attendance History
+            </a>
+
+            <a
+                href="{% url 'scanner-page' %}"
+                class="button button-success"
+            >
+                Open Scanner
+            </a>
+        </nav>
+    </header>
+
+    <section class="dashboard-cards">
+        <article class="dashboard-card">
+            <h2>Total interns</h2>
+            <strong>{{ total_interns }}</strong>
+            <small>{{ active_interns }} currently active</small>
+        </article>
+
+        <article class="dashboard-card">
+            <h2>All records</h2>
+            <strong>{{ total_attendance }}</strong>
+            <small>Lifetime attendance records</small>
+        </article>
+
+        <article class="dashboard-card">
+            <h2>Today's records</h2>
+            <strong>{{ today_attendance }}</strong>
+            <small>Total attendance entries today</small>
+        </article>
+
+        <article class="dashboard-card">
+            <h2>Attendance rate</h2>
+            <strong>{{ today_attendance_rate }}%</strong>
+            <small>Present and late attendance today</small>
+        </article>
+
+        <article class="dashboard-card">
+            <h2>Present today</h2>
+            <strong>{{ present_today }}</strong>
+            <small>{{ present_percentage }}% of today's records</small>
+        </article>
+
+        <article class="dashboard-card">
+            <h2>Late today</h2>
+            <strong>{{ late_today }}</strong>
+            <small>{{ late_percentage }}% of today's records</small>
+        </article>
+
+        <article class="dashboard-card">
+            <h2>Absent today</h2>
+            <strong>{{ absent_today }}</strong>
+            <small>{{ absent_percentage }}% of today's records</small>
+        </article>
+
+        <article class="dashboard-card">
+            <h2>Checkout completion</h2>
+            <strong>{{ check_out_completion_rate }}%</strong>
+            <small>
+                {{ checked_out_today }} of {{ checked_in_today }} checked-in interns
+            </small>
+        </article>
+    </section>
+
+    <section class="dashboard-grid">
+        <article class="panel chart-panel">
+            <div class="panel-header">
+                <h2>Seven-Day Attendance Trend</h2>
+            </div>
+
+            <div class="chart-wrapper">
+                <canvas id="attendanceTrendChart"></canvas>
+            </div>
+        </article>
+
+        <article class="panel">
+            <div class="panel-header">
+                <h2>Today's Snapshot</h2>
+            </div>
+
+            <div class="snapshot-grid">
+                <div class="snapshot-item">
+                    <span>Checked in</span>
+                    <strong>{{ checked_in_today }}</strong>
+
+                    <div class="progress-track">
+                        <div
+                            class="progress-value"
+                            style="width: {{ today_attendance_rate }}%;"
+                        ></div>
+                    </div>
+                </div>
+
+                <div class="snapshot-item">
+                    <span>Checked out</span>
+                    <strong>{{ checked_out_today }}</strong>
+
+                    <div class="progress-track">
+                        <div
+                            class="progress-value"
+                            style="width: {{ check_out_completion_rate }}%;"
+                        ></div>
+                    </div>
+                </div>
+
+                <div class="snapshot-item">
+                    <span>Active interns</span>
+                    <strong>{{ active_interns }}</strong>
+
+                    <div class="progress-track">
+                        <div
+                            class="progress-value"
+                            style="width: {% if total_interns %}100{% else %}0{% endif %}%;"
+                        ></div>
+                    </div>
+                </div>
+            </div>
+        </article>
+    </section>
+
+    <section class="panel" style="margin-bottom: 24px;">
+        <div class="panel-header">
+            <h2>Attendance Methods Today</h2>
+        </div>
+
+        <div class="method-grid">
+            {% for method in attendance_methods %}
+                <article class="method-card">
+                    <span>{{ method.label }}</span>
+                    <strong>{{ method.count }}</strong>
+                </article>
+            {% endfor %}
+        </div>
+    </section>
+
+    <section class="dashboard-grid">
+        <article class="panel">
+            <div class="panel-header">
+                <h2>Batch Overview</h2>
+            </div>
+
+            {% if batch_overview %}
+                <div class="batch-list">
+                    {% for batch in batch_overview %}
+                        <div class="batch-item">
+                            <div class="batch-item-heading">
+                                <a
+                                    href="{% url 'batch-attendance-detail' batch.id %}"
+                                    class="text-link"
+                                >
+                                    {{ batch.name }}
+                                </a>
+
+                                <span class="batch-rate">
+                                    {{ batch.attendance_rate }}%
+                                </span>
+                            </div>
+
+                            <div class="batch-meta">
+                                <span>
+                                    {{ batch.intern_count }}
+                                    intern{{ batch.intern_count|pluralize }}
+                                </span>
+
+                                <span>
+                                    {{ batch.attendance_count }}
+                                    record{{ batch.attendance_count|pluralize }}
+                                </span>
+
+                                <span>
+                                    {{ batch.late_count }} late
+                                </span>
+
+                                <span>
+                                    {{ batch.absent_count }} absent
+                                </span>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="empty-state">
+                    No batches are currently available.
+                </div>
+            {% endif %}
+        </article>
+
+        <article class="panel">
+            <div class="panel-header">
+                <h2>Top Batches</h2>
+            </div>
+
+            {% if top_batches %}
+                <div class="top-batch-list">
+                    {% for batch in top_batches %}
+                        <div class="top-batch-item">
+                            <div>
+                                <a
+                                    href="{% url 'batch-attendance-detail' batch.id %}"
+                                    class="text-link"
+                                >
+                                    {{ batch.name }}
+                                </a>
+
+                                <div class="batch-meta">
+                                    {{ batch.attendance_count }} records
+                                </div>
+                            </div>
+
+                            <strong>{{ batch.attendance_rate }}%</strong>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="empty-state">
+                    Batch performance will appear after attendance is recorded.
+                </div>
+            {% endif %}
+        </article>
+    </section>
+
+    <section class="panel">
+        <div class="panel-header">
+            <h2>Recent Attendance Activity</h2>
+
+            <a
+                href="{% url 'attendance-history' %}"
+                class="text-link"
+            >
+                View all
+            </a>
+        </div>
+
+        {% if recent_records %}
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Intern</th>
+                            <th>Batch</th>
+                            <th>Date</th>
+                            <th>Check-in</th>
+                            <th>Check-out</th>
+                            <th>Method</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        {% for record in recent_records %}
+                            <tr>
+                                <td>
+                                    <a
+                                        href="{% url 'intern-attendance-detail' record.intern.id %}"
+                                        class="text-link"
+                                    >
+                                        {{ record.intern.user.full_name }}
+                                    </a>
+
+                                    <div class="batch-meta">
+                                        {{ record.intern.student_number }}
+                                    </div>
+                                </td>
+
+                                <td>
+                                    <a
+                                        href="{% url 'batch-attendance-detail' record.batch.id %}"
+                                        class="text-link"
+                                    >
+                                        {{ record.batch.name }}
+                                    </a>
+                                </td>
+
+                                <td>
+                                    {{ record.attendance_date|date:"d M Y" }}
+                                </td>
+
+                                <td>
+                                    {% if record.check_in_time %}
+                                        {{ record.check_in_time|time:"H:i:s" }}
+                                    {% else %}
+                                        —
+                                    {% endif %}
+                                </td>
+
+                                <td>
+                                    {% if record.check_out_time %}
+                                        {{ record.check_out_time|time:"H:i:s" }}
+                                    {% else %}
+                                        —
+                                    {% endif %}
+                                </td>
+
+                                <td>
+                                    <span class="method-label">
+                                        {{ record.get_attendance_method_display }}
+                                    </span>
+                                </td>
+
+                                <td>
+                                    <div class="table-status-group">
+                                        {% if record.status == "PRESENT" %}
+                                            <span class="status status-present">
+                                                {{ record.get_status_display }}
+                                            </span>
+                                        {% elif record.status == "LATE" %}
+                                            <span class="status status-late">
+                                                {{ record.get_status_display }}
+                                            </span>
+                                        {% else %}
+                                            <span class="status status-absent">
+                                                {{ record.get_status_display }}
+                                            </span>
+                                        {% endif %}
+
+                                        {% if record.has_checked_out %}
+                                            <span class="checkout-label">
+                                                Checked out
+                                            </span>
+                                        {% elif record.has_checked_in %}
+                                            <span class="checkout-label pending">
+                                                Checkout pending
+                                            </span>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="empty-state">
+                No attendance has been recorded yet.
+            </div>
+        {% endif %}
+    </section>
+{% endblock %}
+
+{% block extra_js %}
+    {{ trend_labels|json_script:"trend-labels" }}
+    {{ trend_values|json_script:"trend-values" }}
+
+    <script>
+        const labelsElement = document.getElementById(
+            "trend-labels"
+        );
+
+        const valuesElement = document.getElementById(
+            "trend-values"
+        );
+
+        const chartElement = document.getElementById(
+            "attendanceTrendChart"
+        );
+
+        if (
+            labelsElement &&
+            valuesElement &&
+            chartElement &&
+            typeof Chart !== "undefined"
+        ) {
+            const trendLabels = JSON.parse(
+                labelsElement.textContent
+            );
+
+            const trendValues = JSON.parse(
+                valuesElement.textContent
+            );
+
+            new Chart(chartElement, {
+                type: "line",
+
+                data: {
+                    labels: trendLabels,
+
+                    datasets: [
+                        {
+                            label: "Attendance Records",
+                            data: trendValues,
+                            borderWidth: 2,
+                            tension: 0.3,
+                            fill: false
+                        }
+                    ]
+                },
+
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+
+                            ticks: {
+                                precision: 0
+                            }
+                        }
+                    },
+
+                    plugins: {
+                        legend: {
+                            display: true
+                        }
+                    }
+                }
+            });
+        }
+    </script>
+{% endblock %}

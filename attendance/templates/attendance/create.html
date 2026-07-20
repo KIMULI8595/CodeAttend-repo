@@ -1,0 +1,326 @@
+{% extends "base.html" %}
+
+{% block title %}
+    Record Attendance | CodeAttend
+{% endblock %}
+
+{% block extra_css %}
+    <style>
+        .form-layout {
+            display: grid;
+            grid-template-columns: minmax(0, 2fr) minmax(260px, 1fr);
+            gap: 24px;
+            align-items: start;
+        }
+
+        .form-panel {
+            padding: 24px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group:last-child {
+            margin-bottom: 0;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #374151;
+            font-size: 14px;
+            font-weight: 800;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            min-height: 44px;
+            padding: 10px 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            background: white;
+            color: var(--color-text);
+            outline: none;
+        }
+
+        .form-group textarea {
+            min-height: 120px;
+            resize: vertical;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            border-color: #6b7280;
+            box-shadow: 0 0 0 3px rgba(107, 114, 128, 0.15);
+        }
+
+        .required {
+            color: #dc2626;
+        }
+
+        .field-help {
+            margin: 7px 0 0;
+            color: var(--color-muted);
+            font-size: 13px;
+            line-height: 1.5;
+        }
+
+        .form-errors {
+            margin: 0 0 22px;
+            padding: 14px 16px;
+            border-left: 5px solid #dc2626;
+            border-radius: 8px;
+            background: #fef2f2;
+            color: #991b1b;
+        }
+
+        .form-errors ul {
+            margin: 0;
+            padding-left: 20px;
+        }
+
+        .field-errors {
+            margin: 7px 0 0;
+            padding-left: 20px;
+            color: #b91c1c;
+            font-size: 13px;
+        }
+
+        .form-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 26px;
+        }
+
+        .information-panel {
+            overflow: hidden;
+        }
+
+        .information-content {
+            padding: 20px 22px;
+        }
+
+        .information-content p {
+            margin: 0 0 14px;
+            color: var(--color-muted);
+            line-height: 1.6;
+        }
+
+        .information-content p:last-child {
+            margin-bottom: 0;
+        }
+
+        .information-list {
+            margin: 0;
+            padding-left: 20px;
+            color: var(--color-muted);
+            line-height: 1.8;
+        }
+
+        @media (max-width: 850px) {
+            .form-layout {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 500px) {
+            .form-actions {
+                flex-direction: column;
+            }
+
+            .form-actions .button {
+                width: 100%;
+            }
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+    <header class="page-header">
+        <div>
+            <h1>Record Attendance</h1>
+
+            <p>
+                Manually create an attendance record for an active intern.
+            </p>
+        </div>
+
+        <nav class="page-actions">
+            <a
+                href="{% url 'attendance-history' %}"
+                class="button button-secondary"
+            >
+                Attendance History
+            </a>
+
+            <a
+                href="{% url 'attendance-audit-history' %}"
+                class="button button-outline"
+            >
+                Audit History
+            </a>
+        </nav>
+    </header>
+
+    <div class="form-layout">
+        <section class="panel form-panel">
+            {% if form.non_field_errors %}
+                <div class="form-errors">
+                    {{ form.non_field_errors }}
+                </div>
+            {% endif %}
+
+            <form method="post" novalidate>
+                {% csrf_token %}
+
+                <div class="form-group">
+                    <label for="{{ form.intern.id_for_label }}">
+                        Intern
+                        <span class="required">*</span>
+                    </label>
+
+                    {{ form.intern }}
+
+                    {% if form.intern.help_text %}
+                        <p class="field-help">
+                            {{ form.intern.help_text }}
+                        </p>
+                    {% endif %}
+
+                    {% if form.intern.errors %}
+                        <div class="field-errors">
+                            {{ form.intern.errors }}
+                        </div>
+                    {% endif %}
+                </div>
+
+                <div class="form-group">
+                    <label for="{{ form.attendance_date.id_for_label }}">
+                        Attendance Date
+                        <span class="required">*</span>
+                    </label>
+
+                    {{ form.attendance_date }}
+
+                    {% if form.attendance_date.help_text %}
+                        <p class="field-help">
+                            {{ form.attendance_date.help_text }}
+                        </p>
+                    {% endif %}
+
+                    {% if form.attendance_date.errors %}
+                        <div class="field-errors">
+                            {{ form.attendance_date.errors }}
+                        </div>
+                    {% endif %}
+                </div>
+
+                <div class="form-group">
+                    <label for="{{ form.status.id_for_label }}">
+                        Attendance Status
+                        <span class="required">*</span>
+                    </label>
+
+                    {{ form.status }}
+
+                    {% if form.status.help_text %}
+                        <p class="field-help">
+                            {{ form.status.help_text }}
+                        </p>
+                    {% endif %}
+
+                    {% if form.status.errors %}
+                        <div class="field-errors">
+                            {{ form.status.errors }}
+                        </div>
+                    {% endif %}
+                </div>
+
+                <div class="form-group">
+                    <label for="{{ form.check_in_time.id_for_label }}">
+                        Check-in Time
+                    </label>
+
+                    {{ form.check_in_time }}
+
+                    <p class="field-help">
+                        Leave this empty for absent attendance. A time may be
+                        supplied for present or late attendance.
+                    </p>
+
+                    {% if form.check_in_time.errors %}
+                        <div class="field-errors">
+                            {{ form.check_in_time.errors }}
+                        </div>
+                    {% endif %}
+                </div>
+
+                <div class="form-group">
+                    <label for="{{ form.reason.id_for_label }}">
+                        Reason
+                        <span class="required">*</span>
+                    </label>
+
+                    {{ form.reason }}
+
+                    <p class="field-help">
+                        Explain why this attendance record is being entered
+                        manually. This reason will be stored in the audit trail.
+                    </p>
+
+                    {% if form.reason.errors %}
+                        <div class="field-errors">
+                            {{ form.reason.errors }}
+                        </div>
+                    {% endif %}
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" class="button button-success">
+                        Record Attendance
+                    </button>
+
+                    <a
+                        href="{% url 'attendance-history' %}"
+                        class="button button-outline"
+                    >
+                        Cancel
+                    </a>
+                </div>
+            </form>
+        </section>
+
+        <aside class="panel information-panel">
+            <div class="panel-header">
+                <h2>Manual Attendance Rules</h2>
+            </div>
+
+            <div class="information-content">
+                <ul class="information-list">
+                    <li>
+                        Only active interns with a batch and session can be
+                        selected.
+                    </li>
+
+                    <li>
+                        Duplicate attendance for the same intern, session, and
+                        date is not allowed.
+                    </li>
+
+                    <li>
+                        Absent attendance must not contain a check-in time.
+                    </li>
+
+                    <li>
+                        Every manual record requires a clear audit reason.
+                    </li>
+                </ul>
+            </div>
+        </aside>
+    </div>
+{% endblock %}

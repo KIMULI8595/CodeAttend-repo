@@ -1,0 +1,259 @@
+{% extends "base.html" %}
+
+{% block title %}
+    Delete Attendance | CodeAttend
+{% endblock %}
+
+{% block extra_css %}
+    <style>
+        .delete-container {
+            width: min(760px, 100%);
+            margin: 0 auto;
+        }
+
+        .warning-panel {
+            overflow: hidden;
+            border-color: #fecaca;
+        }
+
+        .warning-header {
+            padding: 22px 24px;
+            border-bottom: 1px solid #fecaca;
+            background: #fef2f2;
+        }
+
+        .warning-header h2 {
+            margin: 0 0 7px;
+            color: #991b1b;
+        }
+
+        .warning-header p {
+            margin: 0;
+            color: #b91c1c;
+            line-height: 1.5;
+        }
+
+        .warning-content {
+            padding: 24px;
+        }
+
+        .record-summary {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 14px;
+            margin-bottom: 24px;
+        }
+
+        .summary-item {
+            padding: 14px;
+            border: 1px solid var(--color-border);
+            border-radius: 8px;
+            background: #f9fafb;
+        }
+
+        .summary-item span {
+            display: block;
+            margin-bottom: 5px;
+            color: var(--color-muted);
+            font-size: 12px;
+            font-weight: 800;
+            text-transform: uppercase;
+        }
+
+        .summary-item strong {
+            display: block;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #374151;
+            font-size: 14px;
+            font-weight: 800;
+        }
+
+        .form-group textarea {
+            width: 100%;
+            min-height: 130px;
+            padding: 10px 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            background: white;
+            color: var(--color-text);
+            resize: vertical;
+            outline: none;
+        }
+
+        .form-group textarea:focus {
+            border-color: #dc2626;
+            box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.12);
+        }
+
+        .required {
+            color: #dc2626;
+        }
+
+        .field-help {
+            margin: 7px 0 0;
+            color: var(--color-muted);
+            font-size: 13px;
+            line-height: 1.5;
+        }
+
+        .field-errors,
+        .form-errors {
+            color: #b91c1c;
+        }
+
+        .form-errors {
+            margin-bottom: 20px;
+            padding: 14px;
+            border-radius: 8px;
+            background: #fef2f2;
+        }
+
+        .form-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 24px;
+        }
+
+        @media (max-width: 520px) {
+            .record-summary {
+                grid-template-columns: 1fr;
+            }
+
+            .form-actions {
+                flex-direction: column;
+            }
+
+            .form-actions .button {
+                width: 100%;
+            }
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+    <header class="page-header">
+        <div>
+            <h1>Delete Attendance</h1>
+
+            <p>
+                Permanently remove an incorrect attendance record.
+            </p>
+        </div>
+
+        <nav class="page-actions">
+            <a
+                href="{% url 'attendance-history' %}"
+                class="button button-secondary"
+            >
+                Back to History
+            </a>
+        </nav>
+    </header>
+
+    <div class="delete-container">
+        <section class="panel warning-panel">
+            <div class="warning-header">
+                <h2>Confirm Permanent Deletion</h2>
+
+                <p>
+                    The attendance record will be deleted, but a deletion audit
+                    entry will remain in the system.
+                </p>
+            </div>
+
+            <div class="warning-content">
+                <div class="record-summary">
+                    <div class="summary-item">
+                        <span>Intern</span>
+                        <strong>
+                            {{ attendance.intern.user.full_name }}
+                        </strong>
+                    </div>
+
+                    <div class="summary-item">
+                        <span>Student Number</span>
+                        <strong>
+                            {{ attendance.intern.student_number }}
+                        </strong>
+                    </div>
+
+                    <div class="summary-item">
+                        <span>Attendance Date</span>
+                        <strong>
+                            {{ attendance.attendance_date|date:"d M Y" }}
+                        </strong>
+                    </div>
+
+                    <div class="summary-item">
+                        <span>Status</span>
+                        <strong>
+                            {{ attendance.get_status_display }}
+                        </strong>
+                    </div>
+
+                    <div class="summary-item">
+                        <span>Batch</span>
+                        <strong>
+                            {{ attendance.batch.name }}
+                        </strong>
+                    </div>
+
+                    <div class="summary-item">
+                        <span>Session</span>
+                        <strong>
+                            {{ attendance.session.name }}
+                        </strong>
+                    </div>
+                </div>
+
+                {% if form.non_field_errors %}
+                    <div class="form-errors">
+                        {{ form.non_field_errors }}
+                    </div>
+                {% endif %}
+
+                <form method="post" novalidate>
+                    {% csrf_token %}
+
+                    <div class="form-group">
+                        <label for="{{ form.reason.id_for_label }}">
+                            Deletion Reason
+                            <span class="required">*</span>
+                        </label>
+
+                        {{ form.reason }}
+
+                        <p class="field-help">
+                            Explain why this record must be deleted. This reason
+                            will appear in the permanent audit trail.
+                        </p>
+
+                        {% if form.reason.errors %}
+                            <div class="field-errors">
+                                {{ form.reason.errors }}
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="submit" class="button button-danger">
+                            Permanently Delete
+                        </button>
+
+                        <a
+                            href="{% url 'attendance-update' attendance.id %}"
+                            class="button button-outline"
+                        >
+                            Cancel
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </section>
+    </div>
+{% endblock %}

@@ -1,0 +1,531 @@
+{% extends "base.html" %}
+
+{% block title %}
+    Attendance Reports | CodeAttend
+{% endblock %}
+
+{% block extra_css %}
+    <style>
+        .filter-panel {
+            margin-bottom: 24px;
+            padding: 20px;
+        }
+
+        .filters {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 16px;
+            align-items: end;
+        }
+
+        .field {
+            min-width: 0;
+        }
+
+        .field label {
+            display: block;
+            margin-bottom: 7px;
+            color: #374151;
+            font-size: 13px;
+            font-weight: 800;
+        }
+
+        .field input,
+        .field select {
+            width: 100%;
+            min-height: 44px;
+            padding: 10px 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            background: white;
+            color: var(--color-text);
+            outline: none;
+        }
+
+        .field input:focus,
+        .field select:focus {
+            border-color: #6b7280;
+            box-shadow: 0 0 0 3px rgba(107, 114, 128, 0.15);
+        }
+
+        .field-errors {
+            margin: 7px 0 0;
+            padding: 0;
+            color: #b91c1c;
+            font-size: 12px;
+            list-style: none;
+        }
+
+        .filter-actions {
+            display: flex;
+            gap: 8px;
+            grid-column: 1 / -1;
+        }
+
+        .report-summary {
+            display: grid;
+            grid-template-columns: repeat(6, minmax(0, 1fr));
+            gap: 14px;
+            margin-bottom: 24px;
+        }
+
+        .summary-card {
+            padding: 18px;
+            border: 1px solid var(--color-border);
+            border-radius: 11px;
+            background: white;
+            box-shadow: var(--shadow-card);
+        }
+
+        .summary-card span {
+            display: block;
+            margin-bottom: 8px;
+            color: var(--color-muted);
+            font-size: 12px;
+            font-weight: 800;
+            text-transform: uppercase;
+        }
+
+        .summary-card strong {
+            font-size: 27px;
+        }
+
+        .history-summary {
+            padding: 16px 22px;
+            border-bottom: 1px solid var(--color-border);
+        }
+
+        .history-summary p {
+            margin: 0;
+            color: var(--color-muted);
+            font-size: 14px;
+        }
+
+        .record-actions {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+        }
+
+        .small-button {
+            display: inline-flex;
+            min-height: 32px;
+            align-items: center;
+            justify-content: center;
+            padding: 6px 10px;
+            border: 1px solid var(--color-border);
+            border-radius: 7px;
+            background: white;
+            color: var(--color-text);
+            font-size: 12px;
+            font-weight: 800;
+            text-decoration: none;
+        }
+
+        .small-button:hover {
+            background: #f3f4f6;
+        }
+
+        .small-button-danger {
+            border-color: #fecaca;
+            color: #b91c1c;
+        }
+
+        .small-button-danger:hover {
+            background: #fef2f2;
+        }
+
+        .method-badge {
+            display: inline-flex;
+            padding: 4px 8px;
+            border-radius: 999px;
+            background: #f3f4f6;
+            color: #374151;
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        .pagination {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 24px;
+        }
+
+        .pagination a,
+        .pagination span {
+            display: inline-flex;
+            min-height: 38px;
+            align-items: center;
+            justify-content: center;
+            padding: 8px 13px;
+            border: 1px solid var(--color-border);
+            border-radius: 8px;
+            background: white;
+            color: var(--color-text);
+            font-size: 14px;
+            font-weight: 700;
+            text-decoration: none;
+        }
+
+        .pagination a:hover {
+            background: #f3f4f6;
+        }
+
+        .pagination .current {
+            border-color: var(--color-primary);
+            background: var(--color-primary);
+            color: white;
+        }
+
+        @media (max-width: 1200px) {
+            .filters {
+                grid-template-columns: repeat(3, minmax(0, 1fr));
+            }
+
+            .report-summary {
+                grid-template-columns: repeat(3, minmax(0, 1fr));
+            }
+        }
+
+        @media (max-width: 760px) {
+            .filters,
+            .report-summary {
+                grid-template-columns: 1fr;
+            }
+
+            .filter-actions {
+                width: 100%;
+            }
+
+            .filter-actions .button {
+                flex: 1;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .filter-actions {
+                flex-direction: column;
+            }
+
+            .filter-actions .button {
+                width: 100%;
+            }
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+    <header class="page-header">
+        <div>
+            <h1>Attendance Reports</h1>
+
+            <p>
+                Filter, review, and analyse attendance records.
+            </p>
+        </div>
+
+        <nav class="page-actions">
+            <a
+                href="{% url 'attendance-create' %}"
+                class="button button-success"
+            >
+                Record Attendance
+            </a>
+
+            <a
+                href="{% url 'attendance-audit-history' %}"
+                class="button button-outline"
+            >
+                Audit History
+            </a>
+
+            <a
+                href="{% url 'attendance-export-csv' %}{% if query_string %}?{{ query_string }}{% endif %}"
+                class="button button-outline"
+            >
+                Export CSV
+            </a>
+
+            <a
+                href="{% url 'attendance-export-excel' %}{% if query_string %}?{{ query_string }}{% endif %}"
+                class="button button-outline"
+            >
+                Export Excel
+            </a>
+
+            <a
+                href="{% url 'attendance-export-pdf' %}{% if query_string %}?{{ query_string }}{% endif %}"
+                class="button button-outline"
+            >
+                Export PDF
+            </a>
+
+            <a
+                href="{% url 'scanner-page' %}"
+                class="button button-secondary"
+            >
+                Open Scanner
+            </a>
+        </nav>
+    </header>
+
+    <section class="panel filter-panel">
+        <form method="get" class="filters">
+            {% for field in filter_form %}
+                <div class="field">
+                    <label for="{{ field.id_for_label }}">
+                        {{ field.label }}
+                    </label>
+
+                    {{ field }}
+
+                    {% if field.errors %}
+                        <ul class="field-errors">
+                            {% for error in field.errors %}
+                                <li>{{ error }}</li>
+                            {% endfor %}
+                        </ul>
+                    {% endif %}
+                </div>
+            {% endfor %}
+
+            <div class="filter-actions">
+                <button type="submit" class="button">
+                    Generate Report
+                </button>
+
+                <a
+                    href="{% url 'attendance-history' %}"
+                    class="button button-outline"
+                >
+                    Clear Filters
+                </a>
+            </div>
+        </form>
+    </section>
+
+    <section class="report-summary">
+        <article class="summary-card">
+            <span>Total records</span>
+            <strong>{{ summary.total }}</strong>
+        </article>
+
+        <article class="summary-card">
+            <span>Present</span>
+            <strong>{{ summary.present }}</strong>
+        </article>
+
+        <article class="summary-card">
+            <span>Late</span>
+            <strong>{{ summary.late }}</strong>
+        </article>
+
+        <article class="summary-card">
+            <span>Absent</span>
+            <strong>{{ summary.absent }}</strong>
+        </article>
+
+        <article class="summary-card">
+            <span>Attendance rate</span>
+            <strong>{{ summary.attendance_rate }}%</strong>
+        </article>
+
+        <article class="summary-card">
+            <span>Average check-in</span>
+            <strong>
+                {% if summary.average_check_in %}
+                    {{ summary.average_check_in|time:"H:i" }}
+                {% else %}
+                    —
+                {% endif %}
+            </strong>
+        </article>
+    </section>
+
+    <section class="panel">
+        <div class="panel-header">
+            <h2>Attendance Records</h2>
+        </div>
+
+        <div class="history-summary">
+            <p>
+                {% if page.paginator.count %}
+                    Showing
+                    <strong>{{ page.start_index }}</strong>
+                    to
+                    <strong>{{ page.end_index }}</strong>
+                    of
+                    <strong>{{ page.paginator.count }}</strong>
+                    record{{ page.paginator.count|pluralize }}.
+                {% else %}
+                    No records matched the selected filters.
+                {% endif %}
+            </p>
+        </div>
+
+        {% if records %}
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Student Number</th>
+                            <th>Intern</th>
+                            <th>Batch</th>
+                            <th>Session</th>
+                            <th>Date</th>
+                            <th>Check-in</th>
+                            <th>Check-out</th>
+                            <th>Method</th>
+                            <th>Status</th>
+                            <th>Recorded By</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        {% for record in records %}
+                            <tr>
+                                <td>
+                                    {{ record.intern.student_number }}
+                                </td>
+
+                                <td>
+                                    <a
+                                        href="{% url 'intern-attendance-detail' record.intern.id %}"
+                                        class="text-link"
+                                    >
+                                        {{ record.intern.user.full_name }}
+                                    </a>
+                                </td>
+
+                                <td>
+                                    <a
+                                        href="{% url 'batch-attendance-detail' record.batch.id %}"
+                                        class="text-link"
+                                    >
+                                        {{ record.batch.name }}
+                                    </a>
+                                </td>
+
+                                <td>
+                                    {{ record.session.name }}
+                                </td>
+
+                                <td>
+                                    {{ record.attendance_date|date:"d M Y" }}
+                                </td>
+
+                                <td>
+                                    {% if record.check_in_time %}
+                                        {{ record.check_in_time|time:"H:i:s" }}
+                                    {% else %}
+                                        —
+                                    {% endif %}
+                                </td>
+
+                                <td>
+                                    {% if record.check_out_time %}
+                                        {{ record.check_out_time|time:"H:i:s" }}
+                                    {% else %}
+                                        —
+                                    {% endif %}
+                                </td>
+
+                                <td>
+                                    <span class="method-badge">
+                                        {{ record.get_attendance_method_display }}
+                                    </span>
+                                </td>
+
+                                <td>
+                                    {% if record.status == "PRESENT" %}
+                                        <span class="status status-present">
+                                            {{ record.get_status_display }}
+                                        </span>
+                                    {% elif record.status == "LATE" %}
+                                        <span class="status status-late">
+                                            {{ record.get_status_display }}
+                                        </span>
+                                    {% else %}
+                                        <span class="status status-absent">
+                                            {{ record.get_status_display }}
+                                        </span>
+                                    {% endif %}
+                                </td>
+
+                                <td>
+                                    {% if record.recorded_by %}
+                                        {{ record.recorded_by.full_name }}
+                                    {% else %}
+                                        System
+                                    {% endif %}
+                                </td>
+
+                                <td>
+                                    <div class="record-actions">
+                                        <a
+                                            href="{% url 'attendance-update' record.id %}"
+                                            class="small-button"
+                                        >
+                                            Edit
+                                        </a>
+
+                                        <a
+                                            href="{% url 'attendance-delete' record.id %}"
+                                            class="small-button small-button-danger"
+                                        >
+                                            Delete
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="empty-state">
+                No attendance records matched your filters.
+            </div>
+        {% endif %}
+    </section>
+
+    {% if page.paginator.num_pages > 1 %}
+        <nav class="pagination" aria-label="Attendance pagination">
+            {% if page.has_previous %}
+                <a
+                    href="?page=1{% if query_string %}&{{ query_string }}{% endif %}"
+                >
+                    First
+                </a>
+
+                <a
+                    href="?page={{ page.previous_page_number }}{% if query_string %}&{{ query_string }}{% endif %}"
+                >
+                    Previous
+                </a>
+            {% endif %}
+
+            <span class="current">
+                Page {{ page.number }} of {{ page.paginator.num_pages }}
+            </span>
+
+            {% if page.has_next %}
+                <a
+                    href="?page={{ page.next_page_number }}{% if query_string %}&{{ query_string }}{% endif %}"
+                >
+                    Next
+                </a>
+
+                <a
+                    href="?page={{ page.paginator.num_pages }}{% if query_string %}&{{ query_string }}{% endif %}"
+                >
+                    Last
+                </a>
+            {% endif %}
+        </nav>
+    {% endif %}
+{% endblock %}

@@ -1,0 +1,788 @@
+{% extends "base.html" %}
+
+{% block title %}
+    GPS Attendance
+{% endblock %}
+
+{% block content %}
+<div class="gps-attendance-page">
+    <div class="gps-attendance-container">
+        <header class="gps-header">
+            <div>
+                <p class="gps-eyebrow">Intern Self-Service</p>
+                <h1>GPS Attendance</h1>
+                <p class="gps-subtitle">
+                    Check in and check out while you are within an approved
+                    attendance location.
+                </p>
+            </div>
+
+            <div
+                id="location-status"
+                class="location-status location-status-idle"
+                role="status"
+                aria-live="polite"
+            >
+                Location not captured
+            </div>
+        </header>
+
+        {% if messages %}
+            <section class="message-list" aria-label="Notifications">
+                {% for message in messages %}
+                    <div class="message message-{{ message.tags|default:'info' }}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            </section>
+        {% endif %}
+
+        {% if profile_error %}
+            <section class="gps-card gps-error-card">
+                <h2>Attendance unavailable</h2>
+                <p>{{ profile_error }}</p>
+            </section>
+        {% elif not attendance_locations %}
+            <section class="gps-card gps-error-card">
+                <h2>No attendance location configured</h2>
+                <p>
+                    An administrator must configure and activate at least one
+                    attendance location before GPS attendance can be used.
+                </p>
+            </section>
+        {% endif %}
+
+        {% if intern %}
+            <section class="gps-card">
+                <h2>Your assignment</h2>
+
+                <dl class="details-grid">
+                    <div>
+                        <dt>Intern</dt>
+                        <dd>{{ intern.user.full_name }}</dd>
+                    </div>
+
+                    <div>
+                        <dt>Student number</dt>
+                        <dd>{{ intern.student_number }}</dd>
+                    </div>
+
+                    <div>
+                        <dt>Batch</dt>
+                        <dd>
+                            {% if intern.batch %}
+                                {{ intern.batch.name }}
+                            {% else %}
+                                Not assigned
+                            {% endif %}
+                        </dd>
+                    </div>
+
+                    <div>
+                        <dt>Session</dt>
+                        <dd>
+                            {% if intern.session %}
+                                {{ intern.session.name }}
+                            {% else %}
+                                Not assigned
+                            {% endif %}
+                        </dd>
+                    </div>
+
+                    {% if intern.session %}
+                        <div>
+                            <dt>Session starts</dt>
+                            <dd>{{ intern.session.start_time|time:"H:i" }}</dd>
+                        </div>
+
+                        <div>
+                            <dt>Session ends</dt>
+                            <dd>{{ intern.session.end_time|time:"H:i" }}</dd>
+                        </div>
+                    {% endif %}
+                </dl>
+            </section>
+        {% endif %}
+
+        <section class="gps-card">
+            <h2>Today's attendance</h2>
+
+            {% if attendance %}
+                <dl class="details-grid">
+                    <div>
+                        <dt>Status</dt>
+                        <dd>{{ attendance.get_status_display }}</dd>
+                    </div>
+
+                    <div>
+                        <dt>Method</dt>
+                        <dd>{{ attendance.get_attendance_method_display }}</dd>
+                    </div>
+
+                    <div>
+                        <dt>Check-in</dt>
+                        <dd>
+                            {% if attendance.check_in_time %}
+                                {{ attendance.check_in_time|time:"H:i:s" }}
+                            {% else %}
+                                —
+                            {% endif %}
+                        </dd>
+                    </div>
+
+                    <div>
+                        <dt>Check-out</dt>
+                        <dd>
+                            {% if attendance.check_out_time %}
+                                {{ attendance.check_out_time|time:"H:i:s" }}
+                            {% else %}
+                                Not checked out
+                            {% endif %}
+                        </dd>
+                    </div>
+
+                    <div>
+                        <dt>Location</dt>
+                        <dd>
+                            {% if attendance.attendance_location %}
+                                {{ attendance.attendance_location.name }}
+                            {% else %}
+                                —
+                            {% endif %}
+                        </dd>
+                    </div>
+
+                    <div>
+                        <dt>Date</dt>
+                        <dd>{{ attendance.attendance_date }}</dd>
+                    </div>
+                </dl>
+            {% else %}
+                <p class="empty-state">
+                    You have not checked in for your assigned session today.
+                </p>
+            {% endif %}
+        </section>
+
+        {% if can_use_gps %}
+            <section class="gps-card">
+                <h2>Capture your location</h2>
+
+                <div class="field-group">
+                    <label for="attendance-location">
+                        Attendance location
+                    </label>
+
+                    <select
+                        id="attendance-location"
+                        name="attendance_location"
+                        required
+                    >
+                        <option value="">
+                            Select an approved location
+                        </option>
+
+                        {% for location in attendance_locations %}
+                            <option value="{{ location.pk }}">
+                                {{ location.name }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="location-readings">
+                    <div>
+                        <span class="reading-label">Latitude</span>
+                        <strong id="latitude-display">—</strong>
+                    </div>
+
+                    <div>
+                        <span class="reading-label">Longitude</span>
+                        <strong id="longitude-display">—</strong>
+                    </div>
+
+                    <div>
+                        <span class="reading-label">Accuracy</span>
+                        <strong id="accuracy-display">—</strong>
+                    </div>
+                </div>
+
+                <button
+                    type="button"
+                    id="capture-location-button"
+                    class="button button-secondary"
+                >
+                    Capture current location
+                </button>
+
+                <p class="gps-help">
+                    Keep location services enabled and use a device with a
+                    reliable GPS signal. The server will verify both your
+                    accuracy and distance from the approved location.
+                </p>
+            </section>
+
+            <section class="gps-card">
+                <h2>Attendance action</h2>
+
+                <form
+                    id="gps-attendance-form"
+                    method="post"
+                    action=""
+                >
+                    {% csrf_token %}
+
+                    <input
+                        type="hidden"
+                        id="form-attendance-location"
+                        name="attendance_location"
+                    >
+
+                    <input
+                        type="hidden"
+                        id="form-latitude"
+                        name="latitude"
+                    >
+
+                    <input
+                        type="hidden"
+                        id="form-longitude"
+                        name="longitude"
+                    >
+
+                    <input
+                        type="hidden"
+                        id="form-accuracy"
+                        name="accuracy"
+                    >
+
+                    <div class="action-grid">
+                        {% if not attendance %}
+                            <button
+                                type="button"
+                                id="check-in-button"
+                                class="button button-primary"
+                            >
+                                GPS Check In
+                            </button>
+                        {% elif not attendance.check_out_time and attendance.attendance_method == "GPS" %}
+                            <button
+                                type="button"
+                                id="check-out-button"
+                                class="button button-danger"
+                            >
+                                GPS Check Out
+                            </button>
+                        {% elif attendance.check_out_time %}
+                            <div class="completed-state">
+                                Attendance completed for today.
+                            </div>
+                        {% else %}
+                            <div class="completed-state">
+                                Today's attendance was recorded using
+                                {{ attendance.get_attendance_method_display }}.
+                                GPS check-out is unavailable for this record.
+                            </div>
+                        {% endif %}
+                    </div>
+                </form>
+            </section>
+        {% endif %}
+    </div>
+</div>
+
+<style>
+    .gps-attendance-page {
+        padding: 2rem 1rem;
+    }
+
+    .gps-attendance-container {
+        width: min(900px, 100%);
+        margin: 0 auto;
+    }
+
+    .gps-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .gps-header h1 {
+        margin: 0;
+    }
+
+    .gps-eyebrow {
+        margin: 0 0 0.35rem;
+        font-size: 0.8rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        opacity: 0.7;
+    }
+
+    .gps-subtitle {
+        margin: 0.5rem 0 0;
+        max-width: 650px;
+        opacity: 0.8;
+    }
+
+    .gps-card {
+        margin-bottom: 1.25rem;
+        padding: 1.5rem;
+        border: 1px solid rgba(127, 127, 127, 0.25);
+        border-radius: 0.9rem;
+        background: var(--card-background, #ffffff);
+        box-shadow: 0 0.4rem 1.25rem rgba(0, 0, 0, 0.05);
+    }
+
+    .gps-card h2 {
+        margin-top: 0;
+        margin-bottom: 1.25rem;
+        font-size: 1.2rem;
+    }
+
+    .gps-error-card {
+        border-color: #dc3545;
+    }
+
+    .details-grid,
+    .location-readings {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 1rem;
+    }
+
+    .details-grid {
+        margin: 0;
+    }
+
+    .details-grid div,
+    .location-readings div {
+        padding: 0.9rem;
+        border-radius: 0.7rem;
+        background: rgba(127, 127, 127, 0.08);
+    }
+
+    .details-grid dt,
+    .reading-label {
+        display: block;
+        margin-bottom: 0.35rem;
+        font-size: 0.8rem;
+        font-weight: 700;
+        opacity: 0.7;
+    }
+
+    .details-grid dd {
+        margin: 0;
+        font-weight: 600;
+    }
+
+    .field-group {
+        display: grid;
+        gap: 0.45rem;
+        margin-bottom: 1rem;
+    }
+
+    .field-group label {
+        font-weight: 700;
+    }
+
+    .field-group select {
+        width: 100%;
+        min-height: 2.8rem;
+        padding: 0.65rem;
+        border: 1px solid rgba(127, 127, 127, 0.35);
+        border-radius: 0.55rem;
+        background: inherit;
+        color: inherit;
+    }
+
+    .location-readings {
+        margin-bottom: 1rem;
+    }
+
+    .button {
+        min-height: 2.8rem;
+        padding: 0.7rem 1.2rem;
+        border: 0;
+        border-radius: 0.55rem;
+        cursor: pointer;
+        font: inherit;
+        font-weight: 700;
+    }
+
+    .button:disabled {
+        cursor: not-allowed;
+        opacity: 0.6;
+    }
+
+    .button-primary {
+        background: #0d6efd;
+        color: #ffffff;
+    }
+
+    .button-secondary {
+        background: #6c757d;
+        color: #ffffff;
+    }
+
+    .button-danger {
+        background: #dc3545;
+        color: #ffffff;
+    }
+
+    .action-grid {
+        display: grid;
+        gap: 0.75rem;
+    }
+
+    .location-status {
+        flex: 0 0 auto;
+        padding: 0.55rem 0.8rem;
+        border-radius: 999px;
+        font-size: 0.85rem;
+        font-weight: 700;
+    }
+
+    .location-status-idle {
+        background: rgba(108, 117, 125, 0.15);
+    }
+
+    .location-status-loading {
+        background: rgba(255, 193, 7, 0.2);
+    }
+
+    .location-status-success {
+        background: rgba(25, 135, 84, 0.18);
+    }
+
+    .location-status-error {
+        background: rgba(220, 53, 69, 0.18);
+    }
+
+    .message-list {
+        display: grid;
+        gap: 0.75rem;
+        margin-bottom: 1.25rem;
+    }
+
+    .message {
+        padding: 0.9rem 1rem;
+        border-radius: 0.65rem;
+        background: rgba(13, 110, 253, 0.12);
+    }
+
+    .message-success {
+        background: rgba(25, 135, 84, 0.16);
+    }
+
+    .message-error {
+        background: rgba(220, 53, 69, 0.16);
+    }
+
+    .message-warning {
+        background: rgba(255, 193, 7, 0.2);
+    }
+
+    .gps-help,
+    .empty-state {
+        margin-bottom: 0;
+        opacity: 0.75;
+    }
+
+    .completed-state {
+        padding: 1rem;
+        border-radius: 0.65rem;
+        background: rgba(25, 135, 84, 0.14);
+        font-weight: 600;
+    }
+
+    @media (max-width: 700px) {
+        .gps-header {
+            display: grid;
+        }
+
+        .details-grid,
+        .location-readings {
+            grid-template-columns: 1fr;
+        }
+
+        .location-status {
+            justify-self: start;
+        }
+
+        .button {
+            width: 100%;
+        }
+    }
+</style>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const captureButton = document.getElementById(
+            "capture-location-button"
+        );
+
+        const checkInButton = document.getElementById(
+            "check-in-button"
+        );
+
+        const checkOutButton = document.getElementById(
+            "check-out-button"
+        );
+
+        const form = document.getElementById(
+            "gps-attendance-form"
+        );
+
+        if (!captureButton || !form) {
+            return;
+        }
+
+        const locationSelect = document.getElementById(
+            "attendance-location"
+        );
+
+        const statusElement = document.getElementById(
+            "location-status"
+        );
+
+        const latitudeDisplay = document.getElementById(
+            "latitude-display"
+        );
+
+        const longitudeDisplay = document.getElementById(
+            "longitude-display"
+        );
+
+        const accuracyDisplay = document.getElementById(
+            "accuracy-display"
+        );
+
+        const formLocation = document.getElementById(
+            "form-attendance-location"
+        );
+
+        const formLatitude = document.getElementById(
+            "form-latitude"
+        );
+
+        const formLongitude = document.getElementById(
+            "form-longitude"
+        );
+
+        const formAccuracy = document.getElementById(
+            "form-accuracy"
+        );
+
+        let locationCaptured = false;
+
+        function setStatus(message, statusClass) {
+            statusElement.textContent = message;
+            statusElement.className = (
+                "location-status " + statusClass
+            );
+        }
+
+        function setActionButtonsDisabled(disabled) {
+            if (checkInButton) {
+                checkInButton.disabled = disabled;
+            }
+
+            if (checkOutButton) {
+                checkOutButton.disabled = disabled;
+            }
+        }
+
+        function captureLocation() {
+            if (!locationSelect.value) {
+                setStatus(
+                    "Select an attendance location first",
+                    "location-status-error"
+                );
+
+                locationSelect.focus();
+                return;
+            }
+
+            if (!navigator.geolocation) {
+                setStatus(
+                    "Geolocation is not supported by this browser",
+                    "location-status-error"
+                );
+
+                return;
+            }
+
+            locationCaptured = false;
+            setActionButtonsDisabled(true);
+            captureButton.disabled = true;
+            captureButton.textContent = "Capturing location...";
+
+            setStatus(
+                "Requesting location",
+                "location-status-loading"
+            );
+
+            navigator.geolocation.getCurrentPosition(
+                function (position) {
+                    const latitude = position.coords.latitude;
+                    const longitude = position.coords.longitude;
+                    const accuracy = position.coords.accuracy;
+
+                    latitudeDisplay.textContent = latitude.toFixed(6);
+                    longitudeDisplay.textContent = longitude.toFixed(6);
+                    accuracyDisplay.textContent = (
+                        accuracy.toFixed(2) + " metres"
+                    );
+
+                    formLocation.value = locationSelect.value;
+                    formLatitude.value = latitude;
+                    formLongitude.value = longitude;
+                    formAccuracy.value = accuracy;
+
+                    locationCaptured = true;
+                    setActionButtonsDisabled(false);
+
+                    setStatus(
+                        "Location captured",
+                        "location-status-success"
+                    );
+
+                    captureButton.disabled = false;
+                    captureButton.textContent = "Refresh location";
+                },
+                function (error) {
+                    let message = "Unable to capture your location.";
+
+                    if (error.code === error.PERMISSION_DENIED) {
+                        message = (
+                            "Location permission was denied. " +
+                            "Enable location access and try again."
+                        );
+                    } else if (
+                        error.code === error.POSITION_UNAVAILABLE
+                    ) {
+                        message = (
+                            "Your location is currently unavailable. " +
+                            "Move to an open area and try again."
+                        );
+                    } else if (error.code === error.TIMEOUT) {
+                        message = (
+                            "Location capture timed out. Try again."
+                        );
+                    }
+
+                    setStatus(
+                        message,
+                        "location-status-error"
+                    );
+
+                    setActionButtonsDisabled(true);
+                    captureButton.disabled = false;
+                    captureButton.textContent = (
+                        "Capture current location"
+                    );
+                },
+                {
+                    enableHighAccuracy: true,
+                    timeout: 20000,
+                    maximumAge: 0
+                }
+            );
+        }
+
+        function submitAttendance(actionUrl, confirmationMessage) {
+            if (!locationSelect.value) {
+                setStatus(
+                    "Select an attendance location first",
+                    "location-status-error"
+                );
+
+                locationSelect.focus();
+                return;
+            }
+
+            if (!locationCaptured) {
+                setStatus(
+                    "Capture your current location first",
+                    "location-status-error"
+                );
+
+                return;
+            }
+
+            if (!window.confirm(confirmationMessage)) {
+                return;
+            }
+
+            form.action = actionUrl;
+            setActionButtonsDisabled(true);
+            captureButton.disabled = true;
+
+            setStatus(
+                "Submitting attendance",
+                "location-status-loading"
+            );
+
+            form.submit();
+        }
+
+        locationSelect.addEventListener(
+            "change",
+            function () {
+                locationCaptured = false;
+
+                formLocation.value = "";
+                formLatitude.value = "";
+                formLongitude.value = "";
+                formAccuracy.value = "";
+
+                latitudeDisplay.textContent = "—";
+                longitudeDisplay.textContent = "—";
+                accuracyDisplay.textContent = "—";
+
+                setActionButtonsDisabled(true);
+
+                setStatus(
+                    "Location not captured",
+                    "location-status-idle"
+                );
+            }
+        );
+
+        captureButton.addEventListener(
+            "click",
+            captureLocation
+        );
+
+        setActionButtonsDisabled(true);
+
+        if (checkInButton) {
+            checkInButton.addEventListener(
+                "click",
+                function () {
+                    submitAttendance(
+                        "{% url 'gps-check-in' %}",
+                        "Submit this GPS check-in?"
+                    );
+                }
+            );
+        }
+
+        if (checkOutButton) {
+            checkOutButton.addEventListener(
+                "click",
+                function () {
+                    submitAttendance(
+                        "{% url 'gps-check-out' %}",
+                        "Submit this GPS check-out?"
+                    );
+                }
+            );
+        }
+    });
+</script>
+{% endblock %}

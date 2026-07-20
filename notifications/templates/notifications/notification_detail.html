@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+
+{% block title %}
+{{ notification.title }}
+{% endblock %}
+
+{% block content %}
+<div class="notification-detail-page">
+    <a
+        href="{% url 'notification-list' %}"
+        class="back-link"
+    >
+        ← Back to notifications
+    </a>
+
+    <article class="notification-detail-card">
+        <div class="notification-detail-heading">
+            <div>
+                <h1>
+                    {{ notification.title }}
+                </h1>
+
+                <p>
+                    {{ notification.get_notification_type_display }}
+                </p>
+            </div>
+
+            {% if notification.is_read %}
+                <span class="read-badge">
+                    Read
+                </span>
+            {% else %}
+                <span class="unread-badge">
+                    Unread
+                </span>
+            {% endif %}
+        </div>
+
+        <div class="notification-message">
+            {{ notification.message|linebreaks }}
+        </div>
+
+        <footer>
+            Received {{ notification.created_at|date:"d M Y, H:i" }}
+        </footer>
+    </article>
+</div>
+
+<style>
+    .notification-detail-page {
+        max-width: 760px;
+        margin: 0 auto;
+        padding: 24px;
+    }
+
+    .back-link {
+        display: inline-block;
+        margin-bottom: 18px;
+        color: #2563eb;
+        text-decoration: none;
+    }
+
+    .notification-detail-card {
+        padding: 28px;
+        border: 1px solid #e5e7eb;
+        border-radius: 14px;
+        background: #ffffff;
+    }
+
+    .notification-detail-heading {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 18px;
+        padding-bottom: 18px;
+        border-bottom: 1px solid #e5e7eb;
+    }
+
+    .notification-detail-heading h1 {
+        margin: 0 0 8px;
+    }
+
+    .notification-detail-heading p {
+        margin: 0;
+        color: #6b7280;
+    }
+
+    .notification-message {
+        padding: 24px 0;
+        color: #374151;
+        line-height: 1.7;
+    }
+
+    .notification-detail-card footer {
+        color: #6b7280;
+        font-size: 14px;
+    }
+
+    .read-badge,
+    .unread-badge {
+        padding: 5px 10px;
+        border-radius: 999px;
+        font-size: 12px;
+        font-weight: 700;
+    }
+
+    .read-badge {
+        color: #374151;
+        background: #e5e7eb;
+    }
+
+    .unread-badge {
+        color: #1e40af;
+        background: #dbeafe;
+    }
+</style>
+{% endblock %}

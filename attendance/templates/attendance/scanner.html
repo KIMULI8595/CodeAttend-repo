@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>QR Attendance Scanner</title>
+
+    <script src="https://unpkg.com/html5-qrcode"></script>
+
+    <style>
+        body {
+            font-family: Arial, Helvetica, sans-serif;
+            margin: 0;
+            padding: 24px;
+            text-align: center;
+            background: #f5f5f5;
+        }
+
+        h1 {
+            color: #333;
+        }
+
+        #reader {
+            width: min(500px, 100%);
+            margin: 24px auto;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            background: white;
+            padding: 15px;
+            box-sizing: border-box;
+        }
+
+        .message {
+            margin-top: 20px;
+            font-size: 18px;
+            color: #555;
+        }
+
+        .alert {
+            max-width: 500px;
+            margin: 12px auto;
+            padding: 12px;
+            border-radius: 6px;
+            background: white;
+        }
+    </style>
+</head>
+
+<body>
+
+    <h1>CodeAttend QR Scanner</h1>
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert">
+                {{ message }}
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <div id="reader"></div>
+
+    <div class="message">
+        Point the camera at an intern's QR code.
+    </div>
+
+    <script>
+        let scanLocked = false;
+
+        function onScanSuccess(decodedText) {
+            if (scanLocked) {
+                return;
+            }
+
+            scanLocked = true;
+
+            const qrCode = decodedText.trim();
+
+            html5QrcodeScanner.clear()
+                .then(() => {
+                    window.location.href =
+                        `/attendance/scan/${encodeURIComponent(qrCode)}/`;
+                })
+                .catch(() => {
+                    window.location.href =
+                        `/attendance/scan/${encodeURIComponent(qrCode)}/`;
+                });
+        }
+
+        function onScanFailure(error) {
+            // Ignore normal frame-by-frame scan failures.
+        }
+
+        const html5QrcodeScanner = new Html5QrcodeScanner(
+            "reader",
+            {
+                fps: 10,
+                qrbox: {
+                    width: 250,
+                    height: 250
+                },
+                rememberLastUsedCamera: true
+            },
+            false
+        );
+
+        html5QrcodeScanner.render(
+            onScanSuccess,
+            onScanFailure
+        );
+    </script>
+
+</body>
+</html>

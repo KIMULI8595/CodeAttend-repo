@@ -1,0 +1,330 @@
+{% extends "base.html" %}
+
+{% block title %}
+    Correct Attendance | CodeAttend
+{% endblock %}
+
+{% block extra_css %}
+    <style>
+        .form-layout {
+            display: grid;
+            grid-template-columns: minmax(0, 2fr) minmax(280px, 1fr);
+            gap: 24px;
+            align-items: start;
+        }
+
+        .form-panel {
+            padding: 24px;
+        }
+
+        .record-summary {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 14px;
+            margin-bottom: 24px;
+        }
+
+        .summary-item {
+            padding: 14px;
+            border: 1px solid var(--color-border);
+            border-radius: 8px;
+            background: #f9fafb;
+        }
+
+        .summary-item span {
+            display: block;
+            margin-bottom: 5px;
+            color: var(--color-muted);
+            font-size: 12px;
+            font-weight: 800;
+            text-transform: uppercase;
+        }
+
+        .summary-item strong {
+            display: block;
+            overflow-wrap: anywhere;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #374151;
+            font-size: 14px;
+            font-weight: 800;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            min-height: 44px;
+            padding: 10px 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            background: white;
+            color: var(--color-text);
+            outline: none;
+        }
+
+        .form-group textarea {
+            min-height: 120px;
+            resize: vertical;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            border-color: #6b7280;
+            box-shadow: 0 0 0 3px rgba(107, 114, 128, 0.15);
+        }
+
+        .required {
+            color: #dc2626;
+        }
+
+        .field-help {
+            margin: 7px 0 0;
+            color: var(--color-muted);
+            font-size: 13px;
+            line-height: 1.5;
+        }
+
+        .field-errors {
+            margin: 7px 0 0;
+            color: #b91c1c;
+            font-size: 13px;
+        }
+
+        .form-errors {
+            margin-bottom: 22px;
+            padding: 14px 16px;
+            border-left: 5px solid #dc2626;
+            border-radius: 8px;
+            background: #fef2f2;
+            color: #991b1b;
+        }
+
+        .form-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 26px;
+        }
+
+        .information-content {
+            padding: 20px 22px;
+        }
+
+        .information-content p {
+            margin: 0 0 14px;
+            color: var(--color-muted);
+            line-height: 1.6;
+        }
+
+        .information-content p:last-child {
+            margin-bottom: 0;
+        }
+
+        @media (max-width: 850px) {
+            .form-layout {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 520px) {
+            .record-summary {
+                grid-template-columns: 1fr;
+            }
+
+            .form-actions {
+                flex-direction: column;
+            }
+
+            .form-actions .button {
+                width: 100%;
+            }
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+    <header class="page-header">
+        <div>
+            <h1>Correct Attendance</h1>
+
+            <p>
+                Update an incorrect attendance status, date, or check-in time.
+            </p>
+        </div>
+
+        <nav class="page-actions">
+            <a
+                href="{% url 'attendance-history' %}"
+                class="button button-secondary"
+            >
+                Attendance History
+            </a>
+
+            <a
+                href="{% url 'attendance-audit-history' %}"
+                class="button button-outline"
+            >
+                Audit History
+            </a>
+        </nav>
+    </header>
+
+    <div class="form-layout">
+        <section class="panel form-panel">
+            <div class="record-summary">
+                <div class="summary-item">
+                    <span>Intern</span>
+                    <strong>
+                        {{ attendance.intern.user.full_name }}
+                    </strong>
+                </div>
+
+                <div class="summary-item">
+                    <span>Student Number</span>
+                    <strong>
+                        {{ attendance.intern.student_number }}
+                    </strong>
+                </div>
+
+                <div class="summary-item">
+                    <span>Batch</span>
+                    <strong>
+                        {{ attendance.batch.name }}
+                    </strong>
+                </div>
+
+                <div class="summary-item">
+                    <span>Session</span>
+                    <strong>
+                        {{ attendance.session.name }}
+                    </strong>
+                </div>
+            </div>
+
+            {% if form.non_field_errors %}
+                <div class="form-errors">
+                    {{ form.non_field_errors }}
+                </div>
+            {% endif %}
+
+            <form method="post" novalidate>
+                {% csrf_token %}
+
+                <div class="form-group">
+                    <label for="{{ form.attendance_date.id_for_label }}">
+                        Attendance Date
+                        <span class="required">*</span>
+                    </label>
+
+                    {{ form.attendance_date }}
+
+                    {% if form.attendance_date.errors %}
+                        <div class="field-errors">
+                            {{ form.attendance_date.errors }}
+                        </div>
+                    {% endif %}
+                </div>
+
+                <div class="form-group">
+                    <label for="{{ form.status.id_for_label }}">
+                        Attendance Status
+                        <span class="required">*</span>
+                    </label>
+
+                    {{ form.status }}
+
+                    {% if form.status.errors %}
+                        <div class="field-errors">
+                            {{ form.status.errors }}
+                        </div>
+                    {% endif %}
+                </div>
+
+                <div class="form-group">
+                    <label for="{{ form.check_in_time.id_for_label }}">
+                        Check-in Time
+                    </label>
+
+                    {{ form.check_in_time }}
+
+                    <p class="field-help">
+                        This will be removed automatically when the status is
+                        changed to absent.
+                    </p>
+
+                    {% if form.check_in_time.errors %}
+                        <div class="field-errors">
+                            {{ form.check_in_time.errors }}
+                        </div>
+                    {% endif %}
+                </div>
+
+                <div class="form-group">
+                    <label for="{{ form.reason.id_for_label }}">
+                        Correction Reason
+                        <span class="required">*</span>
+                    </label>
+
+                    {{ form.reason }}
+
+                    <p class="field-help">
+                        Describe the mistake being corrected. The previous and
+                        new values will be recorded in the audit trail.
+                    </p>
+
+                    {% if form.reason.errors %}
+                        <div class="field-errors">
+                            {{ form.reason.errors }}
+                        </div>
+                    {% endif %}
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" class="button button-success">
+                        Save Correction
+                    </button>
+
+                    <a
+                        href="{% url 'attendance-history' %}"
+                        class="button button-outline"
+                    >
+                        Cancel
+                    </a>
+
+                    <a
+                        href="{% url 'attendance-delete' attendance.id %}"
+                        class="button button-danger"
+                    >
+                        Delete Record
+                    </a>
+                </div>
+            </form>
+        </section>
+
+        <aside class="panel">
+            <div class="panel-header">
+                <h2>Audit Information</h2>
+            </div>
+
+            <div class="information-content">
+                <p>
+                    Corrections do not overwrite the system history silently.
+                </p>
+
+                <p>
+                    The old status and check-in time, new values, correction
+                    reason, and staff member making the change will be stored.
+                </p>
+            </div>
+        </aside>
+    </div>
+{% endblock %}

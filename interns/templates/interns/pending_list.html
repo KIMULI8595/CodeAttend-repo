@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block title %}Pending Interns | CodeAttend{% endblock %}
+{% block content %}
+<div class="page-header"><div><h1>Pending registrations</h1><p>Review and approve or reject intern accounts.</p></div></div>
+<div class="card">
+{% if interns %}
+<div class="table-responsive"><table><thead><tr><th>Intern</th><th>Student number</th><th>Institution</th><th>Submitted</th><th>Actions</th></tr></thead><tbody>
+{% for intern in interns %}<tr><td><strong>{{ intern.user.full_name }}</strong><br><span class="muted">{{ intern.user.email }}</span></td><td>{{ intern.student_number }}</td><td>{{ intern.university }}<br><span class="muted">{{ intern.course }}</span></td><td>{{ intern.created_at|date:"d M Y H:i" }}</td><td><div class="actions"><form method="post" action="{% url 'approve-intern' intern.id %}">{% csrf_token %}<button class="button button-success" type="submit">Approve</button></form><a class="button button-danger" href="{% url 'reject-intern' intern.id %}">Reject</a></div></td></tr>{% endfor %}
+</tbody></table></div>
+{% else %}<div class="empty-state"><h2>No pending registrations</h2><p>New intern applications will appear here.</p></div>{% endif %}
+</div>
+{% endblock %}

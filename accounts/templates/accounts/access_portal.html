@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block title %}Choose access portal | CodeAttend{% endblock %}
+{% block extra_css %}
+<style>
+.portal-shell{max-width:1050px;margin:50px auto}.portal-intro{text-align:center;margin-bottom:32px}.portal-intro h1{font-size:38px;margin:0 0 12px}.portal-intro p{color:var(--color-muted);font-size:17px}.portal-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:24px}.portal-card{background:white;border:1px solid var(--color-border);border-radius:18px;padding:30px;box-shadow:var(--shadow-card)}.portal-card h2{margin-top:0}.portal-card p{color:var(--color-muted);line-height:1.7}.portal-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:24px}@media(max-width:720px){.portal-grid{grid-template-columns:1fr}.portal-intro h1{font-size:30px}}
+</style>
+{% endblock %}
+{% block content %}
+<section class="portal-shell">
+  <div class="portal-intro"><h1>Welcome to CodeAttend</h1><p>Choose the secure portal that matches your role.</p></div>
+  <div class="portal-grid">
+    <article class="portal-card"><h2>Intern portal</h2><p>Register for an internship attendance account, wait for administrator approval, then record and review your attendance.</p><div class="portal-actions"><a class="button button-primary" href="{% url 'login' %}">Intern login</a><a class="button button-secondary" href="{% url 'intern-register' %}">Create account</a></div></article>
+    <article class="portal-card"><h2>Administration portal</h2><p>For authorised administrators and staff managing approvals, attendance locations, QR scanning and reports.</p><div class="portal-actions"><a class="button button-primary" href="{% url 'admin-login' %}">Administrator login</a><a class="button button-secondary" href="{% url 'admin:index' %}">Django admin</a></div></article>
+  </div>
+</section>
+{% endblock %}

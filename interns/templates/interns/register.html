@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block title %}Intern registration | CodeAttend{% endblock %}
+{% block extra_css %}
+<style>
+.registration-wrap{max-width:900px;margin:36px auto}.registration-card{background:#fff;border:1px solid var(--color-border);border-radius:18px;box-shadow:var(--shadow-card);overflow:hidden}.registration-heading{padding:30px;background:linear-gradient(135deg,#111827,#374151);color:#fff}.registration-heading h1{margin:0 0 10px}.registration-heading p{margin:0;color:#e5e7eb;line-height:1.6}.registration-body{padding:30px}.registration-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px}.field-full{grid-column:1/-1}.form-group label{display:block;margin-bottom:7px;font-weight:700}.form-group .helptext{display:block}.password-field{position:relative}.password-field input{padding-right:72px}.password-toggle{position:absolute;right:8px;top:50%;transform:translateY(-50%);border:0;background:transparent;color:var(--color-info);font-weight:700;cursor:pointer}.approval-note{margin:22px 0;padding:15px;border-radius:10px;background:var(--color-warning-light);color:var(--color-warning);line-height:1.6}.registration-actions{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-top:24px}.registration-actions p{margin:0;color:var(--color-muted)}@media(max-width:700px){.registration-grid{grid-template-columns:1fr}.field-full{grid-column:auto}.registration-body,.registration-heading{padding:22px}.registration-actions{align-items:stretch;flex-direction:column}.registration-actions .button{width:100%}}</style>
+{% endblock %}
+{% block content %}
+<section class="registration-wrap">
+ <article class="registration-card">
+  <header class="registration-heading"><h1>Intern registration</h1><p>Submit your details for review. You will only be able to sign in after an administrator approves your registration.</p></header>
+  <div class="registration-body">
+   <form method="post" novalidate>
+    {% csrf_token %}
+    {% if form.non_field_errors %}<div class="message error">{{ form.non_field_errors }}</div>{% endif %}
+    <div class="registration-grid">
+      {% for field in form %}
+        <div class="form-group {% if field.name == 'university' or field.name == 'course' or field.name == 'accept_terms' %}field-full{% endif %}">
+          {% if field.name == 'accept_terms' %}<label>{{ field }} {{ field.label }}</label>
+          {% else %}<label for="{{ field.id_for_label }}">{{ field.label }}</label>
+            {% if field.name == 'password' or field.name == 'password_confirmation' %}<div class="password-field">{{ field }}<button type="button" class="password-toggle" data-password-toggle>Show</button></div>{% else %}{{ field }}{% endif %}
+          {% endif %}
+          {% if field.help_text %}<span class="helptext">{{ field.help_text }}</span>{% endif %}
+          {{ field.errors }}
+        </div>
+      {% endfor %}
+    </div>
+    <div class="approval-note"><strong>Approval required:</strong> registering does not immediately activate your account. An administrator must verify and approve it first.</div>
+    <div class="registration-actions"><p>Already approved? <a class="text-link" href="{% url 'login' %}">Sign in as an intern</a></p><button type="submit" class="button button-primary">Submit registration</button></div>
+   </form>
+  </div>
+ </article>
+</section>
+{% endblock %}
+{% block extra_js %}<script>document.querySelectorAll('[data-password-toggle]').forEach(btn=>btn.addEventListener('click',()=>{const input=btn.closest('.password-field').querySelector('input');const show=input.type==='password';input.type=show?'text':'password';btn.textContent=show?'Hide':'Show';}));</script>{% endblock %}
