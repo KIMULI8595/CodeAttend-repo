@@ -85,7 +85,4 @@ The supplied project was validated with all 76 tests passing.
 Copy `.env.example` to `.env` and provide values through your deployment environment. Never use the development secret key in production. Set `DJANGO_DEBUG=False`, configure allowed hosts and trusted origins, use HTTPS, configure a production email backend, and use a managed database such as PostgreSQL.
 
 
-
-
-
--0.6072984168544027, 30.662163197996797
+-0.6072071935591176, 30.662120252271297

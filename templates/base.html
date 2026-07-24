@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -103,15 +104,17 @@
             display: inline-flex;
             flex-shrink: 0;
             align-items: center;
-            gap: 10px;
+            width: 60px;
+            height: 60px;
+            /* gap: 10px;
             color: white;
             font-size: 21px;
             font-weight: 800;
             text-decoration: none;
-            letter-spacing: -0.03em;
+            letter-spacing: -0.03em; */
         }
 
-        .brand-mark {
+        /* .brand-mark {
             display: grid;
             width: 36px;
             height: 36px;
@@ -121,7 +124,7 @@
             color: var(--color-primary);
             font-size: 15px;
             font-weight: 900;
-        }
+        } */
 
         .header-content {
             display: flex;
@@ -749,12 +752,16 @@
     {% block extra_css %}{% endblock %}
 </head>
 
+{% load static %}
+
 <body>
     <header class="site-header">
         <div class="site-header-inner">
-            <a href="{% if request.user.is_authenticated %}{% if request.user.is_staff %}{% url 'attendance-dashboard' %}{% else %}{% url 'intern-dashboard' %}{% endif %}{% else %}{% url 'access-portal' %}{% endif %}" class="brand">
+            <!-- <img src="{% if request.user.is_authenticated %}{% if request.user.is_staff %}{% url 'attendance-dashboard' %}{% else %}{% url 'intern-dashboard' %}{% endif %}{% else %}{% url 'access-portal' %}{% endif %}" class="brand">
                 <span class="brand-mark">CA</span><span>CodeAttend</span>
-            </a>
+            </img> -->
+
+            <img src="{% static 'images/logo.png' %}" class="brand" alt="Codinex Computers Ltd Logo">
 
             {% if request.user.is_authenticated %}
                 <div class="header-content">

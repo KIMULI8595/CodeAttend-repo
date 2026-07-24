@@ -28,7 +28,7 @@ class AttendanceLocation(models.Model):
     )
 
     latitude = models.DecimalField(
-        max_digits=9,
+        max_digits=10,
         decimal_places=6,
         validators=[
             MinValueValidator(-90),
@@ -37,7 +37,7 @@ class AttendanceLocation(models.Model):
     )
 
     longitude = models.DecimalField(
-        max_digits=9,
+        max_digits=10,
         decimal_places=6,
         validators=[
             MinValueValidator(-180),
@@ -46,7 +46,7 @@ class AttendanceLocation(models.Model):
     )
 
     radius_metres = models.DecimalField(
-        max_digits=8,
+        max_digits=10,
         decimal_places=2,
         default=100,
         validators=[
@@ -59,7 +59,7 @@ class AttendanceLocation(models.Model):
     )
 
     maximum_accuracy_metres = models.DecimalField(
-        max_digits=8,
+        max_digits=10,
         decimal_places=2,
         default=50,
         validators=[
@@ -132,7 +132,7 @@ class Attendance(models.Model):
     )
 
     check_in_latitude = models.DecimalField(
-        max_digits=9,
+        max_digits=10,
         decimal_places=6,
         null=True,
         blank=True,
@@ -143,7 +143,7 @@ class Attendance(models.Model):
     )
 
     check_in_longitude = models.DecimalField(
-        max_digits=9,
+        max_digits=10,
         decimal_places=6,
         null=True,
         blank=True,
@@ -154,7 +154,7 @@ class Attendance(models.Model):
     )
 
     check_in_accuracy = models.DecimalField(
-        max_digits=8,
+        max_digits=10,
         decimal_places=2,
         null=True,
         blank=True,
@@ -165,7 +165,7 @@ class Attendance(models.Model):
     )
 
     check_out_latitude = models.DecimalField(
-        max_digits=9,
+        max_digits=10,
         decimal_places=6,
         null=True,
         blank=True,
@@ -176,7 +176,7 @@ class Attendance(models.Model):
     )
 
     check_out_longitude = models.DecimalField(
-        max_digits=9,
+        max_digits=10,
         decimal_places=6,
         null=True,
         blank=True,
@@ -187,7 +187,7 @@ class Attendance(models.Model):
     )
 
     check_out_accuracy = models.DecimalField(
-        max_digits=8,
+        max_digits=10,
         decimal_places=2,
         null=True,
         blank=True,
