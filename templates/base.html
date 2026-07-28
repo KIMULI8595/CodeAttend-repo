@@ -1,3 +1,4 @@
+{% load static %}
 
 <!DOCTYPE html>
 <html lang="en">
@@ -44,6 +45,9 @@
             --radius-small: 8px;
             --radius-medium: 12px;
             --radius-large: 16px;
+
+            --page-width: 1400px;
+            --mobile-breakpoint: 800px;
         }
 
         * {
@@ -52,11 +56,16 @@
 
         html {
             min-height: 100%;
+            scroll-behavior: smooth;
         }
 
         body {
+            display: flex;
+            min-width: 0;
             min-height: 100vh;
             margin: 0;
+            flex-direction: column;
+            overflow-x: hidden;
             font-family:
                 Inter,
                 -apple-system,
@@ -69,21 +78,47 @@
             color: var(--color-text);
         }
 
+        main {
+            flex: 1;
+        }
+
         button,
         input,
         select,
         textarea {
+            max-width: 100%;
             font: inherit;
+        }
+
+        input,
+        select,
+        textarea {
+            font-size: 16px;
+        }
+
+        img,
+        video,
+        canvas,
+        svg {
+            max-width: 100%;
+        }
+
+        img {
+            height: auto;
         }
 
         a {
             color: inherit;
         }
 
+        [hidden] {
+            display: none !important;
+        }
+
         .site-header {
             position: sticky;
             top: 0;
-            z-index: 100;
+            z-index: 1000;
             background: var(--color-primary);
             color: white;
             box-shadow:
@@ -91,7 +126,7 @@
         }
 
         .site-header-inner {
-            width: min(1400px, 94%);
+            width: min(var(--page-width), 94%);
             min-height: 68px;
             margin: 0 auto;
             display: flex;
@@ -100,34 +135,107 @@
             gap: 24px;
         }
 
-        .brand {
+        .brand-link {
             display: inline-flex;
             flex-shrink: 0;
             align-items: center;
-            width: 60px;
-            height: 60px;
-            /* gap: 10px;
-            color: white;
-            font-size: 21px;
-            font-weight: 800;
+            justify-content: center;
+            border-radius: 10px;
             text-decoration: none;
-            letter-spacing: -0.03em; */
         }
 
-        /* .brand-mark {
-            display: grid;
-            width: 36px;
-            height: 36px;
-            place-items: center;
+        .brand-link:focus-visible {
+            outline: 3px solid rgba(255, 255, 255, 0.55);
+            outline-offset: 3px;
+        }
+
+        .brand {
+            display: block;
+            width: 60px;
+            height: 60px;
+            object-fit: contain;
+        }
+
+        .mobile-menu-button {
+            display: none;
+            width: 44px;
+            height: 44px;
+            flex-shrink: 0;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+            border: 1px solid rgba(255, 255, 255, 0.18);
             border-radius: 10px;
-            background: white;
-            color: var(--color-primary);
-            font-size: 15px;
-            font-weight: 900;
-        } */
+            background: rgba(255, 255, 255, 0.08);
+            color: white;
+            cursor: pointer;
+            transition:
+                background 0.15s ease,
+                border-color 0.15s ease;
+        }
+
+        .mobile-menu-button:hover {
+            border-color: rgba(255, 255, 255, 0.32);
+            background: rgba(255, 255, 255, 0.14);
+        }
+
+        .mobile-menu-button:focus-visible {
+            outline: 3px solid rgba(255, 255, 255, 0.45);
+            outline-offset: 2px;
+        }
+
+        .hamburger-icon {
+            position: relative;
+            display: block;
+            width: 22px;
+            height: 16px;
+        }
+
+        .hamburger-icon span {
+            position: absolute;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            border-radius: 999px;
+            background: currentColor;
+            transition:
+                top 0.2s ease,
+                transform 0.2s ease,
+                opacity 0.2s ease;
+        }
+
+        .hamburger-icon span:nth-child(1) {
+            top: 0;
+        }
+
+        .hamburger-icon span:nth-child(2) {
+            top: 7px;
+        }
+
+        .hamburger-icon span:nth-child(3) {
+            top: 14px;
+        }
+
+        .mobile-menu-button[aria-expanded="true"]
+        .hamburger-icon span:nth-child(1) {
+            top: 7px;
+            transform: rotate(45deg);
+        }
+
+        .mobile-menu-button[aria-expanded="true"]
+        .hamburger-icon span:nth-child(2) {
+            opacity: 0;
+        }
+
+        .mobile-menu-button[aria-expanded="true"]
+        .hamburger-icon span:nth-child(3) {
+            top: 7px;
+            transform: rotate(-45deg);
+        }
 
         .header-content {
             display: flex;
+            min-width: 0;
             flex: 1;
             align-items: center;
             justify-content: flex-end;
@@ -136,6 +244,7 @@
 
         .site-navigation {
             display: flex;
+            min-width: 0;
             align-items: center;
             flex-wrap: wrap;
             gap: 6px;
@@ -143,7 +252,7 @@
 
         .site-navigation a {
             display: inline-flex;
-            min-height: 40px;
+            min-height: 42px;
             align-items: center;
             justify-content: center;
             padding: 9px 12px;
@@ -163,190 +272,22 @@
             color: white;
         }
 
+        .site-navigation a:focus-visible {
+            outline: 2px solid white;
+            outline-offset: 2px;
+        }
+
         .header-user-area {
             display: flex;
+            min-width: 0;
             flex-shrink: 0;
             align-items: center;
             gap: 12px;
         }
 
-        .notification-navigation {
-            position: relative;
-        }
-
-        .notification-bell {
-            position: relative;
-            display: grid;
-            width: 42px;
-            height: 42px;
-            place-items: center;
-            padding: 0;
-            border: 0;
-            background: transparent;
-            cursor: pointer;
-            border-radius: 10px;
-            color: #e5e7eb;
-            text-decoration: none;
-            transition:
-                background 0.15s ease,
-                color 0.15s ease,
-                transform 0.15s ease;
-        }
-
-        .notification-bell:hover,
-        .notification-bell.active {
-            background: rgba(255, 255, 255, 0.12);
-            color: white;
-        }
-
-        .notification-bell:hover {
-            transform: translateY(-1px);
-        }
-
-        .notification-bell svg {
-            width: 22px;
-            height: 22px;
-            fill: none;
-            stroke: currentColor;
-            stroke-width: 2;
-            stroke-linecap: round;
-            stroke-linejoin: round;
-        }
-
-        .notification-badge {
-            position: absolute;
-            top: 1px;
-            right: 0;
-            display: inline-flex;
-            min-width: 19px;
-            height: 19px;
-            align-items: center;
-            justify-content: center;
-            padding: 0 5px;
-            border: 2px solid var(--color-primary);
-            border-radius: 999px;
-            background: #dc2626;
-            color: white;
-            font-size: 10px;
-            font-weight: 900;
-            line-height: 1;
-        }
-
-        .notification-dropdown {
-            position: absolute;
-            top: calc(100% + 10px);
-            right: 0;
-            width: min(380px, calc(100vw - 24px));
-            overflow: hidden;
-            border: 1px solid var(--color-border);
-            border-radius: var(--radius-medium);
-            background: var(--color-surface);
-            color: var(--color-text);
-            box-shadow: 0 18px 45px rgba(15, 23, 42, 0.2);
-        }
-
-        .notification-dropdown[hidden] {
-            display: none;
-        }
-
-        .notification-dropdown-header,
-        .notification-dropdown-footer {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 12px;
-            padding: 14px 16px;
-        }
-
-        .notification-dropdown-header {
-            border-bottom: 1px solid var(--color-border);
-        }
-
-        .notification-dropdown-header h2 {
-            margin: 0;
-            font-size: 16px;
-        }
-
-        .notification-dropdown-count {
-            color: var(--color-muted);
-            font-size: 12px;
-            font-weight: 700;
-        }
-
-        .notification-dropdown-list {
-            max-height: 360px;
-            overflow-y: auto;
-        }
-
-        .notification-dropdown-item {
-            display: block;
-            padding: 14px 16px;
-            border-bottom: 1px solid var(--color-border);
-            text-decoration: none;
-            transition: background 0.15s ease;
-        }
-
-        .notification-dropdown-item:hover,
-        .notification-dropdown-item:focus {
-            background: #f9fafb;
-            outline: none;
-        }
-
-        .notification-dropdown-title {
-            display: block;
-            margin-bottom: 5px;
-            font-size: 14px;
-            font-weight: 800;
-        }
-
-        .notification-dropdown-message {
-            display: -webkit-box;
-            overflow: hidden;
-            color: var(--color-muted);
-            font-size: 13px;
-            line-height: 1.45;
-            -webkit-box-orient: vertical;
-            -webkit-line-clamp: 2;
-        }
-
-        .notification-dropdown-time {
-            display: block;
-            margin-top: 7px;
-            color: var(--color-info);
-            font-size: 11px;
-            font-weight: 700;
-        }
-
-        .notification-dropdown-empty {
-            padding: 32px 18px;
-            color: var(--color-muted);
-            text-align: center;
-            line-height: 1.5;
-        }
-
-        .notification-dropdown-footer {
-            border-top: 1px solid var(--color-border);
-            background: #f9fafb;
-        }
-
-        .notification-dropdown-footer a,
-        .notification-dropdown-footer button {
-            border: 0;
-            background: transparent;
-            color: var(--color-info);
-            cursor: pointer;
-            font-size: 13px;
-            font-weight: 800;
-            text-decoration: none;
-        }
-
-        .notification-dropdown-footer a:hover,
-        .notification-dropdown-footer button:hover {
-            text-decoration: underline;
-        }
-
         .user-summary {
             display: flex;
+            min-width: 0;
             align-items: center;
             gap: 10px;
             padding-left: 12px;
@@ -389,21 +330,32 @@
             font-weight: 600;
         }
 
+        .logout-form {
+            margin: 0;
+        }
+
         .page-container {
-            width: min(1400px, 94%);
+            width: min(var(--page-width), 94%);
+            min-width: 0;
             margin: 30px auto 48px;
         }
 
         .page-header {
             display: flex;
+            min-width: 0;
             justify-content: space-between;
             align-items: flex-start;
             gap: 24px;
             margin-bottom: 24px;
         }
 
+        .page-header > * {
+            min-width: 0;
+        }
+
         .page-header h1 {
             margin: 0 0 8px;
+            overflow-wrap: anywhere;
             font-size: clamp(28px, 4vw, 38px);
             line-height: 1.15;
             letter-spacing: -0.035em;
@@ -417,6 +369,7 @@
 
         .page-actions {
             display: flex;
+            min-width: 0;
             flex-wrap: wrap;
             justify-content: flex-end;
             gap: 10px;
@@ -435,6 +388,7 @@
             color: white;
             cursor: pointer;
             font-weight: 700;
+            text-align: center;
             text-decoration: none;
             transition:
                 background 0.15s ease,
@@ -447,6 +401,11 @@
             transform: translateY(-1px);
             box-shadow:
                 0 5px 12px rgba(15, 23, 42, 0.16);
+        }
+
+        .button:focus-visible {
+            outline: 3px solid rgba(37, 99, 235, 0.35);
+            outline-offset: 2px;
         }
 
         .button-secondary {
@@ -490,6 +449,7 @@
         .message {
             padding: 14px 16px;
             margin-bottom: 10px;
+            overflow-wrap: anywhere;
             border: 1px solid var(--color-border);
             border-left: 5px solid var(--color-secondary);
             border-radius: var(--radius-small);
@@ -518,6 +478,8 @@
         }
 
         .panel {
+            min-width: 0;
+            overflow: hidden;
             border: 1px solid rgba(229, 231, 235, 0.8);
             border-radius: var(--radius-medium);
             background: var(--color-surface);
@@ -526,6 +488,7 @@
 
         .panel-header {
             display: flex;
+            min-width: 0;
             align-items: center;
             justify-content: space-between;
             gap: 16px;
@@ -533,18 +496,32 @@
             border-bottom: 1px solid var(--color-border);
         }
 
+        .panel-header > * {
+            min-width: 0;
+        }
+
         .panel-header h2 {
             margin: 0;
+            overflow-wrap: anywhere;
             font-size: 19px;
             letter-spacing: -0.02em;
         }
 
+        .panel-body {
+            padding: 22px;
+        }
+
         .table-wrapper {
+            width: 100%;
+            max-width: 100%;
             overflow-x: auto;
+            overscroll-behavior-inline: contain;
+            -webkit-overflow-scrolling: touch;
         }
 
         table {
             width: 100%;
+            min-width: 640px;
             border-collapse: collapse;
         }
 
@@ -615,7 +592,9 @@
         }
 
         .form-control {
+            display: block;
             width: 100%;
+            max-width: 100%;
             min-height: 44px;
             padding: 10px 12px;
             border: 1px solid #d1d5db;
@@ -636,8 +615,21 @@
             resize: vertical;
         }
 
+        .form-row,
+        .form-grid {
+            display: grid;
+            grid-template-columns:
+                repeat(2, minmax(0, 1fr));
+            gap: 18px;
+        }
+
+        .form-group {
+            min-width: 0;
+        }
+
         .helptext {
             margin: 6px 0;
+            overflow-wrap: anywhere;
             color: var(--color-muted);
             font-size: 13px;
             line-height: 1.5;
@@ -646,8 +638,42 @@
         .errorlist {
             margin: 6px 0;
             padding-left: 20px;
+            overflow-wrap: anywhere;
             color: var(--color-danger);
             font-size: 14px;
+        }
+
+        .card-grid,
+        .dashboard-grid,
+        .stats-grid {
+            display: grid;
+            min-width: 0;
+            grid-template-columns:
+                repeat(auto-fit, minmax(240px, 1fr));
+            gap: 20px;
+        }
+
+        .card,
+        .stat-card {
+            min-width: 0;
+            overflow: hidden;
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-medium);
+            background: var(--color-surface);
+            box-shadow: var(--shadow-card);
+        }
+
+        .responsive-media,
+        .qr-code,
+        .chart-container {
+            width: 100%;
+            max-width: 100%;
+            height: auto;
+        }
+
+        .chart-container {
+            position: relative;
+            overflow: hidden;
         }
 
         .site-footer {
@@ -659,64 +685,10 @@
             font-size: 13px;
         }
 
-        @media (max-width: 1050px) {
+        @media (max-width: 1100px) {
             .site-header-inner {
-                align-items: flex-start;
-                flex-direction: column;
-                padding: 14px 0;
-            }
-
-            .header-content {
-                width: 100%;
-                justify-content: space-between;
-            }
-        }
-
-        @media (max-width: 800px) {
-            .header-content {
-                align-items: flex-start;
-                flex-direction: column-reverse;
-                gap: 12px;
-            }
-
-            .site-navigation {
-                width: 100%;
-            }
-
-            .site-navigation a {
-                flex: 1;
-            }
-
-            .header-user-area {
-                width: 100%;
-                justify-content: flex-end;
-            }
-
-            .page-header {
-                flex-direction: column;
-            }
-
-            .page-actions {
-                width: 100%;
-                justify-content: flex-start;
-            }
-        }
-
-        @media (max-width: 600px) {
-            .notification-dropdown {
-                position: fixed;
-                top: 72px;
-                right: 12px;
-                left: 12px;
-                width: auto;
-            }
-
-            .user-details {
-                display: none;
-            }
-
-            .user-summary {
-                padding-left: 8px;
+                width: 96%;
+                gap: 14px;
             }
 
             .site-navigation a {
@@ -724,27 +696,227 @@
                 padding-left: 9px;
                 font-size: 13px;
             }
+
+            .user-name {
+                max-width: 130px;
+            }
         }
 
-        @media (max-width: 520px) {
-            .page-container {
-                width: min(94%, 100%);
-                margin-top: 20px;
+        @media (max-width: 800px) {
+            body.mobile-menu-open {
+                overflow: hidden;
+            }
+
+            .site-header-inner {
+                min-height: 64px;
+                flex-wrap: wrap;
+                padding: 2px 0;
+            }
+
+            .brand {
+                width: 56px;
+                height: 56px;
+            }
+
+            .mobile-menu-button {
+                display: inline-flex;
+            }
+
+            .header-content {
+                position: fixed;
+                top: 64px;
+                right: 0;
+                bottom: 0;
+                left: 0;
+                display: flex;
+                width: 100%;
+                max-height: calc(100vh - 64px);
+                padding: 18px;
+                flex-direction: column;
+                align-items: stretch;
+                justify-content: flex-start;
+                gap: 18px;
+                overflow-y: auto;
+                overscroll-behavior: contain;
+                background: var(--color-primary);
+                opacity: 0;
+                visibility: hidden;
+                transform: translateY(-12px);
+                pointer-events: none;
+                transition:
+                    opacity 0.2s ease,
+                    visibility 0.2s ease,
+                    transform 0.2s ease;
+            }
+
+            .header-content.is-open {
+                opacity: 1;
+                visibility: visible;
+                transform: translateY(0);
+                pointer-events: auto;
             }
 
             .site-navigation {
-                display: grid;
-                grid-template-columns:
-                    repeat(2, minmax(0, 1fr));
+                display: flex;
+                width: 100%;
+                flex-direction: column;
+                align-items: stretch;
+                gap: 8px;
             }
 
             .site-navigation a {
                 width: 100%;
-                text-align: center;
+                min-height: 48px;
+                justify-content: flex-start;
+                padding: 12px 14px;
+                font-size: 15px;
+                text-align: left;
             }
 
-            .page-actions .button {
+            .header-user-area {
                 width: 100%;
+                margin-top: auto;
+                padding-top: 18px;
+                flex-direction: column;
+                align-items: stretch;
+                border-top: 1px solid rgba(255, 255, 255, 0.15);
+            }
+
+            .user-summary {
+                width: 100%;
+                padding: 0;
+                border-left: 0;
+            }
+
+            .user-details {
+                display: flex;
+            }
+
+            .user-name {
+                max-width: none;
+            }
+
+            .logout-form,
+            .logout-form .button {
+                width: 100%;
+            }
+
+            .logout-form .button {
+                min-height: 48px;
+            }
+
+            .page-container {
+                width: 92%;
+                margin-top: 24px;
+            }
+
+            .page-header {
+                flex-direction: column;
+                gap: 16px;
+            }
+
+            .page-actions {
+                width: 100%;
+                justify-content: flex-start;
+            }
+
+            .panel-header {
+                align-items: flex-start;
+                flex-direction: column;
+            }
+
+            .form-row,
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 600px) {
+            .page-container {
+                width: calc(100% - 28px);
+                margin-top: 18px;
+                margin-bottom: 32px;
+            }
+
+            .page-header {
+                margin-bottom: 18px;
+            }
+
+            .page-header h1 {
+                font-size: clamp(26px, 9vw, 34px);
+            }
+
+            .page-actions {
+                display: grid;
+                grid-template-columns: 1fr;
+            }
+
+            .page-actions .button,
+            .page-actions button,
+            .page-actions input[type="submit"] {
+                width: 100%;
+            }
+
+            .panel-header {
+                padding: 16px;
+            }
+
+            .panel-body {
+                padding: 16px;
+            }
+
+            th,
+            td {
+                padding: 12px;
+            }
+
+            .message {
+                padding: 12px 14px;
+            }
+
+            .card-grid,
+            .dashboard-grid,
+            .stats-grid {
+                grid-template-columns: 1fr;
+                gap: 14px;
+            }
+
+            .empty-state {
+                padding: 36px 16px;
+            }
+
+            .site-footer {
+                padding: 18px 14px;
+            }
+        }
+
+        @media (max-width: 380px) {
+            .page-container {
+                width: calc(100% - 20px);
+            }
+
+            .header-content {
+                padding: 14px;
+            }
+
+            .site-navigation a {
+                padding: 11px 12px;
+                font-size: 14px;
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            html {
+                scroll-behavior: auto;
+            }
+
+            *,
+            *::before,
+            *::after {
+                scroll-behavior: auto !important;
+                transition-duration: 0.01ms !important;
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
             }
         }
     </style>
@@ -752,66 +924,327 @@
     {% block extra_css %}{% endblock %}
 </head>
 
-{% load static %}
-
 <body>
     <header class="site-header">
         <div class="site-header-inner">
-            <!-- <img src="{% if request.user.is_authenticated %}{% if request.user.is_staff %}{% url 'attendance-dashboard' %}{% else %}{% url 'intern-dashboard' %}{% endif %}{% else %}{% url 'access-portal' %}{% endif %}" class="brand">
-                <span class="brand-mark">CA</span><span>CodeAttend</span>
-            </img> -->
-
-            <img src="{% static 'images/logo.png' %}" class="brand" alt="Codinex Computers Ltd Logo">
-
-            {% if request.user.is_authenticated %}
-                <div class="header-content">
-                    <nav class="site-navigation" aria-label="Main navigation">
+            <a
+                class="brand-link"
+                href="
+                    {% if request.user.is_authenticated %}
                         {% if request.user.is_staff %}
-                            <a href="{% url 'attendance-dashboard' %}" class="{% if request.resolver_match.url_name == 'attendance-dashboard' %}active{% endif %}">Dashboard</a>
-                            <a href="{% url 'pending-interns' %}" class="{% if request.resolver_match.url_name == 'pending-interns' %}active{% endif %}">Approvals</a>
-                            <a href="{% url 'attendance-history' %}" class="{% if request.resolver_match.url_name == 'attendance-history' %}active{% endif %}">Attendance</a>
-                            <a href="{% url 'scanner-page' %}" class="{% if request.resolver_match.url_name == 'scanner-page' %}active{% endif %}">Scanner</a>
+                            {% url 'attendance-dashboard' %}
                         {% else %}
-                            <a href="{% url 'intern-dashboard' %}" class="{% if request.resolver_match.url_name == 'intern-dashboard' %}active{% endif %}">Dashboard</a>
-                            <a href="{% url 'gps-attendance' %}" class="{% if request.resolver_match.url_name == 'gps-attendance' %}active{% endif %}">Record attendance</a>
-                            <a href="{% url 'attendance-history' %}" class="{% if request.resolver_match.url_name == 'attendance-history' %}active{% endif %}">My history</a>
+                            {% url 'intern-dashboard' %}
                         {% endif %}
-                        <a href="{% url 'notification-list' %}" class="{% if request.resolver_match.url_name == 'notification-list' %}active{% endif %}">Notifications{% if notification_unread_count %} ({{ notification_unread_count }}){% endif %}</a>
+                    {% else %}
+                        {% url 'access-portal' %}
+                    {% endif %}
+                "
+                aria-label="CodeAttend home"
+            >
+                <img
+                    src="{% static 'images/logo.png' %}"
+                    class="brand"
+                    alt="Codinex Computers Ltd Logo"
+                >
+            </a>
+
+            <button
+                type="button"
+                class="mobile-menu-button"
+                id="mobile-menu-button"
+                aria-label="Open navigation menu"
+                aria-controls="header-content"
+                aria-expanded="false"
+            >
+                <span class="hamburger-icon" aria-hidden="true">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </span>
+            </button>
+
+            <div class="header-content" id="header-content">
+                {% if request.user.is_authenticated %}
+                    <nav
+                        class="site-navigation"
+                        aria-label="Main navigation"
+                    >
+                        {% if request.user.is_staff %}
+                            <a
+                                href="{% url 'attendance-dashboard' %}"
+                                class="
+                                    {% if request.resolver_match.url_name == 'attendance-dashboard' %}
+                                        active
+                                    {% endif %}
+                                "
+                            >
+                                Dashboard
+                            </a>
+
+                            <a
+                                href="{% url 'pending-interns' %}"
+                                class="
+                                    {% if request.resolver_match.url_name == 'pending-interns' %}
+                                        active
+                                    {% endif %}
+                                "
+                            >
+                                Approvals
+                            </a>
+
+                            <a
+                                href="{% url 'attendance-history' %}"
+                                class="
+                                    {% if request.resolver_match.url_name == 'attendance-history' %}
+                                        active
+                                    {% endif %}
+                                "
+                            >
+                                Attendance
+                            </a>
+
+                            <a
+                                href="{% url 'scanner-page' %}"
+                                class="
+                                    {% if request.resolver_match.url_name == 'scanner-page' %}
+                                        active
+                                    {% endif %}
+                                "
+                            >
+                                Scanner
+                            </a>
+                        {% else %}
+                            <a
+                                href="{% url 'intern-dashboard' %}"
+                                class="
+                                    {% if request.resolver_match.url_name == 'intern-dashboard' %}
+                                        active
+                                    {% endif %}
+                                "
+                            >
+                                Dashboard
+                            </a>
+
+                            <a
+                                href="{% url 'gps-attendance' %}"
+                                class="
+                                    {% if request.resolver_match.url_name == 'gps-attendance' %}
+                                        active
+                                    {% endif %}
+                                "
+                            >
+                                Record attendance
+                            </a>
+
+                            <a
+                                href="{% url 'attendance-history' %}"
+                                class="
+                                    {% if request.resolver_match.url_name == 'attendance-history' %}
+                                        active
+                                    {% endif %}
+                                "
+                            >
+                                My history
+                            </a>
+                        {% endif %}
+
+                        <a
+                            href="{% url 'notification-list' %}"
+                            class="
+                                {% if request.resolver_match.url_name == 'notification-list' %}
+                                    active
+                                {% endif %}
+                            "
+                        >
+                            Notifications
+                            {% if notification_unread_count %}
+                                ({{ notification_unread_count }})
+                            {% endif %}
+                        </a>
                     </nav>
+
                     <div class="header-user-area">
                         <div class="user-summary">
-                            <div class="user-avatar" aria-hidden="true">{{ request.user.first_name|default:request.user.email|slice:":1" }}</div>
+                            <div
+                                class="user-avatar"
+                                aria-hidden="true"
+                            >
+                                {{ request.user.first_name|default:request.user.email|slice:":1" }}
+                            </div>
+
                             <div class="user-details">
-                                <span class="user-name">{{ request.user.full_name|default:request.user.email }}</span>
-                                <span class="user-role">{% if request.user.is_superuser %}Administrator{% elif request.user.is_staff %}Staff{% else %}Intern{% endif %}</span>
+                                <span class="user-name">
+                                    {{ request.user.full_name|default:request.user.email }}
+                                </span>
+
+                                <span class="user-role">
+                                    {% if request.user.is_superuser %}
+                                        Administrator
+                                    {% elif request.user.is_staff %}
+                                        Staff
+                                    {% else %}
+                                        Intern
+                                    {% endif %}
+                                </span>
                             </div>
                         </div>
-                        <form method="post" action="{% url 'logout' %}" style="margin:0">
+
+                        <form
+                            method="post"
+                            action="{% url 'logout' %}"
+                            class="logout-form"
+                        >
                             {% csrf_token %}
-                            <button type="submit" class="button button-secondary" aria-label="Sign out">Logout</button>
+
+                            <button
+                                type="submit"
+                                class="button button-secondary"
+                                aria-label="Sign out"
+                            >
+                                Logout
+                            </button>
                         </form>
                     </div>
-                </div>
-            {% else %}
-                <nav class="site-navigation" aria-label="Public navigation">
-                    <a href="{% url 'intern-register' %}">Intern registration</a>
-                    <a href="{% url 'login' %}">Intern login</a>
-                    <a href="{% url 'admin-login' %}">Administrator login</a>
-                </nav>
-            {% endif %}
+                {% else %}
+                    <nav
+                        class="site-navigation"
+                        aria-label="Public navigation"
+                    >
+                        <a
+                            href="{% url 'intern-register' %}"
+                            class="
+                                {% if request.resolver_match.url_name == 'intern-register' %}
+                                    active
+                                {% endif %}
+                            "
+                        >
+                            Intern registration
+                        </a>
+
+                        <a
+                            href="{% url 'login' %}"
+                            class="
+                                {% if request.resolver_match.url_name == 'login' %}
+                                    active
+                                {% endif %}
+                            "
+                        >
+                            Intern login
+                        </a>
+
+                        <a
+                            href="{% url 'admin-login' %}"
+                            class="
+                                {% if request.resolver_match.url_name == 'admin-login' %}
+                                    active
+                                {% endif %}
+                            "
+                        >
+                            Administrator login
+                        </a>
+                    </nav>
+                {% endif %}
+            </div>
         </div>
     </header>
 
     <main class="page-container">
         {% if messages %}
-            <section class="messages" aria-label="System messages">
-                {% for message in messages %}<div class="message {{ message.tags }}" role="alert">{{ message }}</div>{% endfor %}
+            <section
+                class="messages"
+                aria-label="System messages"
+            >
+                {% for message in messages %}
+                    <div
+                        class="message {{ message.tags }}"
+                        role="alert"
+                    >
+                        {{ message }}
+                    </div>
+                {% endfor %}
             </section>
         {% endif %}
+
         {% block content %}{% endblock %}
     </main>
 
-    <footer class="site-footer">CodeAttend Attendance Management System</footer>
+    <footer class="site-footer">
+        CodeAttend Attendance Management System
+    </footer>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const menuButton = document.getElementById(
+                "mobile-menu-button"
+            );
+
+            const headerContent = document.getElementById(
+                "header-content"
+            );
+
+            if (!menuButton || !headerContent) {
+                return;
+            }
+
+            const mobileBreakpoint = 800;
+
+            function openMenu() {
+                headerContent.classList.add("is-open");
+                menuButton.setAttribute("aria-expanded", "true");
+                menuButton.setAttribute(
+                    "aria-label",
+                    "Close navigation menu"
+                );
+                document.body.classList.add("mobile-menu-open");
+            }
+
+            function closeMenu() {
+                headerContent.classList.remove("is-open");
+                menuButton.setAttribute("aria-expanded", "false");
+                menuButton.setAttribute(
+                    "aria-label",
+                    "Open navigation menu"
+                );
+                document.body.classList.remove("mobile-menu-open");
+            }
+
+            function toggleMenu() {
+                const isOpen =
+                    menuButton.getAttribute("aria-expanded") === "true";
+
+                if (isOpen) {
+                    closeMenu();
+                } else {
+                    openMenu();
+                }
+            }
+
+            menuButton.addEventListener("click", toggleMenu);
+
+            headerContent.querySelectorAll("a").forEach(function (link) {
+                link.addEventListener("click", function () {
+                    if (window.innerWidth <= mobileBreakpoint) {
+                        closeMenu();
+                    }
+                });
+            });
+
+            document.addEventListener("keydown", function (event) {
+                if (event.key === "Escape") {
+                    closeMenu();
+                    menuButton.focus();
+                }
+            });
+
+            window.addEventListener("resize", function () {
+                if (window.innerWidth > mobileBreakpoint) {
+                    closeMenu();
+                }
+            });
+        });
+    </script>
+
     {% block extra_js %}{% endblock %}
 </body>
 </html>
