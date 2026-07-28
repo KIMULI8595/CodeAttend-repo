@@ -1,6 +1,9 @@
 import os
 from pathlib import Path
 
+import dj_database_url
+from django.core.exceptions import ImproperlyConfigured
+
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -20,6 +23,14 @@ DEBUG = os.environ.get(
 }
 
 
+if not DEBUG and SECRET_KEY == (
+    "django-insecure-development-key-change-before-production"
+):
+    raise ImproperlyConfigured(
+        "DJANGO_SECRET_KEY must be configured when DJANGO_DEBUG is False."
+    )
+
+
 ALLOWED_HOSTS = [
     host.strip()
     for host in os.environ.get(
@@ -28,6 +39,18 @@ ALLOWED_HOSTS = [
     ).split(",")
     if host.strip()
 ]
+
+# Render provides this value automatically after the web service is created.
+RENDER_EXTERNAL_HOSTNAME = os.environ.get(
+    "RENDER_EXTERNAL_HOSTNAME",
+)
+
+if (
+    RENDER_EXTERNAL_HOSTNAME
+    and RENDER_EXTERNAL_HOSTNAME not in ALLOWED_HOSTS
+):
+    ALLOWED_HOSTS.append(RENDER_EXTERNAL_HOSTNAME)
+
 
 
 INSTALLED_APPS = [
@@ -47,8 +70,13 @@ INSTALLED_APPS = [
 ]
 
 
+# ---------------------------------------------------------------------------
+# Middleware
+# ---------------------------------------------------------------------------
+
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -57,7 +85,6 @@ MIDDLEWARE = [
     "accounts.middleware.ActiveAccountMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
-
 
 ROOT_URLCONF = "CodeAttend.urls"
 
@@ -102,12 +129,24 @@ TEMPLATES = [
 WSGI_APPLICATION = "CodeAttend.wsgi.application"
 
 
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
+
+DATABASE_URL = os.environ.get("DATABASE_URL")
+
+if DATABASE_URL:
+    DATABASES = {
+        "default": dj_database_url.config(
+            default=DATABASE_URL,
+            conn_max_age=600,
+            conn_health_checks=True,
+        ),
     }
-}
+else:
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.sqlite3",
+            "NAME": BASE_DIR / "db.sqlite3",
+        },
+    }
 
 
 AUTH_PASSWORD_VALIDATORS = [
@@ -147,21 +186,37 @@ USE_I18N = True
 USE_TZ = True
 
 
-STATIC_URL = "static/"
+STATIC_URL = "/static/"
 
 STATIC_ROOT = BASE_DIR / "staticfiles"
-
-MEDIA_URL = "/media/"
-
-MEDIA_ROOT = BASE_DIR / "media"
 
 STATICFILES_DIRS = [
     BASE_DIR / "static",
 ]
 
 
-DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+STORAGES = {
+    "default": {
+        "BACKEND": (
+            "django.core.files.storage.FileSystemStorage"
+        ),
+    },
+    "staticfiles": {
+        "BACKEND": (
+            "whitenoise.storage."
+            "CompressedManifestStaticFilesStorage"
+        ),
+    },
+}
 
+
+MEDIA_URL = "/media/"
+
+MEDIA_ROOT = BASE_DIR / "media"
+
+
+
+DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 AUTH_USER_MODEL = "accounts.User"
 
@@ -173,34 +228,100 @@ AUTHENTICATION_BACKENDS = [
     "django.contrib.auth.backends.ModelBackend",
 ]
 
+
 LOGIN_URL = "login"
+
 LOGIN_REDIRECT_URL = "intern-dashboard"
+
 LOGOUT_REDIRECT_URL = "login"
-# Development-friendly email backend. Override in production with SMTP settings.
+
+
 EMAIL_BACKEND = os.environ.get(
     "DJANGO_EMAIL_BACKEND",
     "django.core.mail.backends.console.EmailBackend",
 )
-DEFAULT_FROM_EMAIL = os.environ.get("DEFAULT_FROM_EMAIL", "noreply@codeattend.local")
-MEDIA_URL = "media/"
-MEDIA_ROOT = BASE_DIR / "media"
 
-# Security defaults for deployments. Development remains convenient while
-# production can be hardened entirely through environment variables.
+DEFAULT_FROM_EMAIL = os.environ.get(
+    "DEFAULT_FROM_EMAIL",
+    "noreply@codeattend.local",
+)
+
+
+
 CSRF_TRUSTED_ORIGINS = [
     origin.strip()
-    for origin in os.environ.get("DJANGO_CSRF_TRUSTED_ORIGINS", "").split(",")
+    for origin in os.environ.get(
+        "DJANGO_CSRF_TRUSTED_ORIGINS",
+        "",
+    ).split(",")
     if origin.strip()
 ]
+
+
+render_origin = (
+    f"https://{RENDER_EXTERNAL_HOSTNAME}"
+    if RENDER_EXTERNAL_HOSTNAME
+    else None
+)
+
+if (
+    render_origin
+    and render_origin not in CSRF_TRUSTED_ORIGINS
+):
+    CSRF_TRUSTED_ORIGINS.append(render_origin)
+
+
 SESSION_COOKIE_HTTPONLY = True
+
 CSRF_COOKIE_HTTPONLY = True
+
 SECURE_CONTENT_TYPE_NOSNIFF = True
+
 X_FRAME_OPTIONS = "DENY"
 
+
+# Render terminates HTTPS at its proxy and forwards the request to Django.
+SECURE_PROXY_SSL_HEADER = (
+    "HTTP_X_FORWARDED_PROTO",
+    "https",
+)
+
+
 if not DEBUG:
-    SECURE_SSL_REDIRECT = os.environ.get("DJANGO_SECURE_SSL_REDIRECT", "True").lower() in {"1", "true", "yes"}
+    SECURE_SSL_REDIRECT = os.environ.get(
+        "DJANGO_SECURE_SSL_REDIRECT",
+        "True",
+    ).lower() in {
+        "true",
+        "1",
+        "yes",
+    }
+
     SESSION_COOKIE_SECURE = True
+
     CSRF_COOKIE_SECURE = True
-    SECURE_HSTS_SECONDS = int(os.environ.get("DJANGO_SECURE_HSTS_SECONDS", "31536000"))
-    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
-    SECURE_HSTS_PRELOAD = True
+
+    SECURE_HSTS_SECONDS = int(
+        os.environ.get(
+            "DJANGO_SECURE_HSTS_SECONDS",
+            "0",
+        )
+    )
+
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = os.environ.get(
+        "DJANGO_SECURE_HSTS_INCLUDE_SUBDOMAINS",
+        "False",
+    ).lower() in {
+        "true",
+        "1",
+        "yes",
+    }
+
+    SECURE_HSTS_PRELOAD = os.environ.get(
+        "DJANGO_SECURE_HSTS_PRELOAD",
+        "False",
+    ).lower() in {
+        "true",
+        "1",
+        "yes",
+    }
