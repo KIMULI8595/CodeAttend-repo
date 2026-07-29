@@ -1,4 +1,5 @@
 import csv
+import logging
 from decimal import Decimal, InvalidOperation
 
 from django.contrib import messages
@@ -28,6 +29,9 @@ from .models import (
 from .services.analytics import AttendanceAnalyticsService
 from .services.report_export import AttendanceReportExportService
 from .services.attendance import AttendanceError, AttendanceService
+
+
+logger = logging.getLogger(__name__)
 
 
 staff_required = user_passes_test(
@@ -188,6 +192,19 @@ def scan_attendance(request, qr_code):
             request,
             str(error),
         )
+    except Exception:
+        logger.exception(
+            "Unexpected QR attendance error for intern_id=%s, recorded_by_id=%s",
+            intern.pk,
+            request.user.pk,
+        )
+        messages.error(
+            request,
+            (
+                "An unexpected server error prevented attendance from "
+                "being recorded. Please contact the administrator."
+            ),
+        )
 
     return redirect("scanner-page")
 
@@ -310,6 +327,18 @@ def gps_check_in(request):
             request,
             str(error),
         )
+    except Exception:
+        logger.exception(
+            "Unexpected GPS check-in error for user_id=%s",
+            request.user.pk,
+        )
+        messages.error(
+            request,
+            (
+                "An unexpected server error prevented GPS check-in. "
+                "Please contact the administrator."
+            ),
+        )
 
     return redirect("gps-attendance")
 
@@ -361,6 +390,18 @@ def gps_check_out(request):
         messages.error(
             request,
             str(error),
+        )
+    except Exception:
+        logger.exception(
+            "Unexpected GPS check-out error for user_id=%s",
+            request.user.pk,
+        )
+        messages.error(
+            request,
+            (
+                "An unexpected server error prevented GPS check-out. "
+                "Please contact the administrator."
+            ),
         )
 
     return redirect("gps-attendance")
