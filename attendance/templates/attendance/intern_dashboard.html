@@ -1,11 +1,111 @@
 {% extends "base.html" %}
+{% load static %}
+
 {% block title %}Intern dashboard | CodeAttend{% endblock %}
-{% block extra_css %}<style>.dashboard-cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px;margin:24px 0}.dashboard-card,.profile-card{background:#fff;border:1px solid var(--color-border);border-radius:14px;padding:22px;box-shadow:var(--shadow-card)}.dashboard-card strong{display:block;font-size:32px;margin-top:8px}.intern-grid{display:grid;grid-template-columns:1fr 1.5fr;gap:20px}.profile-list{display:grid;gap:12px}.profile-item span{display:block;color:var(--color-muted);font-size:12px;text-transform:uppercase;font-weight:800}.profile-item strong{display:block;margin-top:4px}.quick-actions{display:flex;flex-wrap:wrap;gap:10px}.today-state{padding:18px;border-radius:12px;background:#f9fafb;margin:18px 0}@media(max-width:850px){.dashboard-cards,.intern-grid{grid-template-columns:1fr}}</style>{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/intern_dashboard.css' %}">
+{% endblock %}
+
 {% block content %}
-<header class="page-header"><div><h1>Welcome, {{ request.user.first_name }}</h1><p>{{ today|date:"l, d F Y" }} · Intern self-service dashboard</p></div><div class="quick-actions"><a class="button button-primary" href="{% url 'gps-attendance' %}">Record attendance</a><a class="button button-secondary" href="{% url 'attendance-history' %}">View history</a>{% if intern.qr_code %}<a class="button button-secondary" href="{% url 'intern-qr' intern.id %}" target="_blank">View QR code</a>{% endif %}</div></header>
-{% if profile_error %}<div class="message error">{{ profile_error }}</div>{% else %}
-<section class="dashboard-cards"><article class="dashboard-card"><span>Present records</span><strong>{{ present_count }}</strong></article><article class="dashboard-card"><span>Late records</span><strong>{{ late_count }}</strong></article><article class="dashboard-card"><span>Absent records</span><strong>{{ absent_count }}</strong></article></section>
-<section class="intern-grid"><article class="profile-card"><h2>My profile</h2><div class="profile-list"><div class="profile-item"><span>Student number</span><strong>{{ intern.student_number }}</strong></div><div class="profile-item"><span>Institution</span><strong>{{ intern.university }}</strong></div><div class="profile-item"><span>Programme</span><strong>{{ intern.course }}</strong></div><div class="profile-item"><span>Batch</span><strong>{{ intern.batch|default:"Not assigned" }}</strong></div><div class="profile-item"><span>Session</span><strong>{{ intern.session|default:"Not assigned" }}</strong></div></div></article>
-<article class="profile-card"><h2>Today's attendance</h2><div class="today-state">{% if today_attendance %}<strong>{{ today_attendance.get_status_display }}</strong><p>Checked in: {{ today_attendance.check_in_time|default:"—" }} · Checked out: {{ today_attendance.check_out_time|default:"—" }}</p>{% else %}<strong>No attendance recorded yet</strong><p>Use GPS attendance or present your QR code to authorised staff.</p>{% endif %}</div><h2>Recent records</h2><div class="table-wrapper"><table><thead><tr><th>Date</th><th>Status</th><th>Check in</th><th>Check out</th></tr></thead><tbody>{% for record in recent_records %}<tr><td>{{ record.attendance_date }}</td><td>{{ record.get_status_display }}</td><td>{{ record.check_in_time|default:"—" }}</td><td>{{ record.check_out_time|default:"—" }}</td></tr>{% empty %}<tr><td colspan="4">No attendance records yet.</td></tr>{% endfor %}</tbody></table></div></article></section>
-{% endif %}
+<div class="intern-dashboard">
+    <header class="page-header intern-dashboard-header">
+        <div class="dashboard-heading">
+            <p class="eyebrow">Intern dashboard</p>
+            <h1>Welcome, {{ request.user.first_name|default:"Intern" }}</h1>
+            <p>{{ today|date:"l, d F Y" }} · Manage your attendance and profile</p>
+        </div>
+
+        <div class="quick-actions" aria-label="Dashboard actions">
+            <a class="button" href="{% url 'gps-attendance' %}">Record attendance</a>
+            <a class="button button-secondary" href="{% url 'attendance-history' %}">View history</a>
+            {% if intern.qr_code %}
+                <a class="button button-outline" href="{% url 'intern-qr' intern.id %}" target="_blank" rel="noopener">View QR code</a>
+            {% endif %}
+        </div>
+    </header>
+
+    {% if profile_error %}
+        <div class="message error">{{ profile_error }}</div>
+    {% else %}
+        <section class="dashboard-cards" aria-label="Attendance summary">
+            <article class="dashboard-card dashboard-card-present">
+                <span>Present records</span>
+                <strong>{{ present_count }}</strong>
+            </article>
+            <article class="dashboard-card dashboard-card-late">
+                <span>Late records</span>
+                <strong>{{ late_count }}</strong>
+            </article>
+            <article class="dashboard-card dashboard-card-absent">
+                <span>Absent records</span>
+                <strong>{{ absent_count }}</strong>
+            </article>
+        </section>
+
+        <section class="intern-grid">
+            <article class="dashboard-panel profile-card">
+                <div class="section-heading">
+                    <div>
+                        <p class="eyebrow">Account</p>
+                        <h2>My profile</h2>
+                    </div>
+                </div>
+
+                <dl class="profile-list">
+                    <div class="profile-item"><dt>Student number</dt><dd>{{ intern.student_number }}</dd></div>
+                    <div class="profile-item"><dt>Institution</dt><dd>{{ intern.university }}</dd></div>
+                    <div class="profile-item"><dt>Programme</dt><dd>{{ intern.course }}</dd></div>
+                    <div class="profile-item"><dt>Batch</dt><dd>{{ intern.batch|default:"Not assigned" }}</dd></div>
+                    <div class="profile-item"><dt>Session</dt><dd>{{ intern.session|default:"Not assigned" }}</dd></div>
+                </dl>
+            </article>
+
+            <article class="dashboard-panel attendance-card">
+                <div class="section-heading">
+                    <div>
+                        <p class="eyebrow">Today</p>
+                        <h2>Today's attendance</h2>
+                    </div>
+                    {% if today_attendance %}<span class="status-pill status-{{ today_attendance.status|lower }}">{{ today_attendance.get_status_display }}</span>{% endif %}
+                </div>
+
+                <div class="today-state">
+                    {% if today_attendance %}
+                        <div class="today-time"><span>Checked in</span><strong>{{ today_attendance.check_in_time|default:"—" }}</strong></div>
+                        <div class="today-time"><span>Checked out</span><strong>{{ today_attendance.check_out_time|default:"—" }}</strong></div>
+                    {% else %}
+                        <strong>No attendance recorded yet</strong>
+                        <p>Use GPS attendance or present your QR code to authorised staff.</p>
+                    {% endif %}
+                </div>
+
+                <div class="recent-records-heading">
+                    <div>
+                        <p class="eyebrow">History</p>
+                        <h2>Recent records</h2>
+                    </div>
+                    <a href="{% url 'attendance-history' %}">View all</a>
+                </div>
+
+                <div class="recent-records" role="list">
+                    {% for record in recent_records %}
+                        <article class="record-card" role="listitem">
+                            <div class="record-main">
+                                <time datetime="{{ record.attendance_date|date:'Y-m-d' }}">{{ record.attendance_date|date:"M j, Y" }}</time>
+                                <span class="status-pill status-{{ record.status|lower }}">{{ record.get_status_display }}</span>
+                            </div>
+                            <dl class="record-times">
+                                <div><dt>Check in</dt><dd>{{ record.check_in_time|default:"—" }}</dd></div>
+                                <div><dt>Check out</dt><dd>{{ record.check_out_time|default:"—" }}</dd></div>
+                            </dl>
+                        </article>
+                    {% empty %}
+                        <div class="empty-state">No attendance records yet.</div>
+                    {% endfor %}
+                </div>
+            </article>
+        </section>
+    {% endif %}
+</div>
 {% endblock %}
