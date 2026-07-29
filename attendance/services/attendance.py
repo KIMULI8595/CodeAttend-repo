@@ -399,7 +399,7 @@ class AttendanceService:
 
         intern = (
             InternProfile.objects
-            .select_for_update()
+            .select_for_update(of=("self",))
             .select_related(
                 "user",
                 "batch",
@@ -483,7 +483,7 @@ class AttendanceService:
         """
         intern = (
             InternProfile.objects
-            .select_for_update()
+            .select_for_update(of=("self",))
             .select_related(
                 "user",
                 "batch",
@@ -592,7 +592,7 @@ class AttendanceService:
         """
         intern = (
             InternProfile.objects
-            .select_for_update()
+            .select_for_update(of=("self",))
             .select_related(
                 "user",
                 "batch",
@@ -639,7 +639,7 @@ class AttendanceService:
         try:
             attendance = (
                 Attendance.objects
-                .select_for_update()
+                .select_for_update(of=("self",))
                 .select_related(
                     "intern__user",
                     "batch",
@@ -762,7 +762,7 @@ class AttendanceService:
 
         intern = (
             InternProfile.objects
-            .select_for_update()
+            .select_for_update(of=("self",))
             .select_related(
                 "user",
                 "batch",
@@ -907,7 +907,7 @@ class AttendanceService:
 
         attendance = (
             Attendance.objects
-            .select_for_update()
+            .select_for_update(of=("self",))
             .select_related(
                 "intern__user",
                 "batch",
@@ -1016,7 +1016,7 @@ class AttendanceService:
 
         attendance = (
             Attendance.objects
-            .select_for_update()
+            .select_for_update(of=("self",))
             .select_related(
                 "intern__user",
                 "batch",
